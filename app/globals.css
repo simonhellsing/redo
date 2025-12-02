@@ -3,13 +3,93 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Branding variables - will be overridden by workspace branding */
+  --brand-primary: #3b82f6;
+  --brand-accent: #8b5cf6;
+
+  /* Neutral Colors */
+  --neutral-0: #ffffff;
+  --neutral-50: #f9f9f9;
+  --neutral-100: #f1f1f1;
+  --neutral-200: #e9e9e9;
+  --neutral-300: #cdcdcd;
+  --neutral-400: #a5a5a5;
+  --neutral-500: #767676;
+  --neutral-550: #5f5f5f;
+  --neutral-600: #4a4a4a;
+  --neutral-700: #2b2b2b;
+  --neutral-725: #222222;
+  --neutral-750: #1e1e1e;
+  --neutral-800: #191919;
+  --neutral-900: #111111;
+
+  /* Positive Colors */
+  --positive-50: #f4fdf3;
+  --positive-500: #008552;
+  --positive-900: #043d27;
+
+  /* Negative Colors */
+  --negative-50: #fff0f0;
+  --negative-500: #d42d2d;
+  --negative-900: #751313;
+
+  /* Attention Colors */
+  --attention-50: #fefceb;
+  --attention-500: #ba5900;
+  --attention-900: #7a3c02;
+
+  /* Prominence Colors */
+  --prominence-50: #f4faff;
+  --prominence-500: #0371df;
+  --prominence-900: #073c71;
+
+  /* Importance Colors */
+  --importance-50: #ece3f5;
+  --importance-500: #a560ef;
+  --importance-900: #421c6b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-accent: var(--brand-accent);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+  
+  /* Neutral colors */
+  --color-neutral-0: var(--neutral-0);
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-550: var(--neutral-550);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-725: var(--neutral-725);
+  --color-neutral-750: var(--neutral-750);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+  
+  /* Semantic colors */
+  --color-prominence-50: var(--prominence-50);
+  --color-prominence-500: var(--prominence-500);
+  --color-prominence-900: var(--prominence-900);
+  --color-attention-50: var(--attention-50);
+  --color-attention-500: var(--attention-500);
+  --color-attention-900: var(--attention-900);
+  --color-positive-50: var(--positive-50);
+  --color-positive-500: var(--positive-500);
+  --color-positive-900: var(--positive-900);
+  --color-negative-50: var(--negative-50);
+  --color-negative-500: var(--negative-500);
+  --color-negative-900: var(--negative-900);
+  --color-importance-50: var(--importance-50);
+  --color-importance-500: var(--importance-500);
+  --color-importance-900: var(--importance-900);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +102,103 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), sans-serif;
+}
+
+@layer utilities {
+  .text-headline-large {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 36px !important;
+    line-height: 44px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-headline-medium {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 32px !important;
+    line-height: 40px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-headline-small {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 28px !important;
+    line-height: 36px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-title-large {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 24px !important;
+    line-height: 32px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-title-medium {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 20px !important;
+    line-height: 28px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-title-small {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 18px !important;
+    line-height: 24px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-label-large {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    line-height: 20px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-label-medium {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    line-height: 16px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-label-small {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    line-height: 16px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-body-large {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 16px !important;
+    line-height: 24px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-body-medium {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    line-height: 20px !important;
+    letter-spacing: 0 !important;
+  }
+  
+  .text-body-small {
+    font-family: var(--font-inter), sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 12px !important;
+    line-height: 16px !important;
+    letter-spacing: 0 !important;
+  }
 }
