@@ -6,17 +6,19 @@ import { cn } from '@/lib/utils'
 type InputVariant = 'primary' | 'secondary'
 type InputSize = 'medium' | 'large'
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   variant?: InputVariant
-  size?: InputSize
+  inputSize?: InputSize
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
+  // Explicitly exclude native 'size' to avoid conflict
+  size?: never
 }
 
 export function Input({
   className,
   variant = 'primary',
-  size = 'large',
+  inputSize = 'large',
   leftIcon,
   rightIcon,
   disabled,
@@ -26,7 +28,7 @@ export function Input({
   const gap = hasIcons ? '8px' : '12px'
   
   // Size-specific styles
-  const isMedium = size === 'medium'
+  const isMedium = inputSize === 'medium'
   const height = isMedium ? '32px' : undefined
   const paddingY = isMedium ? '10px' : '12px'
   const paddingX = hasIcons ? '12px' : '16px'
@@ -54,10 +56,27 @@ export function Input({
   const iconColorHover = textColorHover
   const iconColorActive = textColorActive
 
+  const [isHovered, setIsHovered] = React.useState(false)
+  const [isFocused, setIsFocused] = React.useState(false)
+
+  const currentBorderColor = isFocused 
+    ? borderColorActive 
+    : isHovered 
+    ? borderColorHover 
+    : borderColorDefault
+
+  const currentTextColor = isFocused || isHovered
+    ? (isFocused ? textColorActive : textColorHover)
+    : (disabled ? textColorDisabled : textColorDefault)
+
+  const currentIconColor = isFocused || isHovered
+    ? (isFocused ? iconColorActive : iconColorHover)
+    : iconColorDefault
+
   return (
     <div
       className={cn(
-        'group flex items-center transition-colors focus-within:outline-none',
+        'group flex items-center transition-colors',
         disabled && 'cursor-not-allowed opacity-60',
         className
       )}
@@ -65,50 +84,15 @@ export function Input({
         height,
         paddingTop: paddingY,
         paddingBottom: paddingY,
-        paddingLeft: leftIcon ? paddingX : paddingX,
-        paddingRight: rightIcon ? paddingX : paddingX,
+        paddingLeft: paddingX,
+        paddingRight: paddingX,
         gap,
         backgroundColor: bgColor,
-        border: `1px solid ${borderColorDefault}`,
+        border: `1px solid ${currentBorderColor}`,
         borderRadius: '6px',
-        '--input-text-color': disabled ? textColorDisabled : textColorDefault,
-        '--input-text-color-hover': textColorHover,
-        '--input-text-color-active': textColorActive,
-        '--input-border-color-hover': borderColorHover,
-        '--input-border-color-active': borderColorActive,
-        '--input-icon-color': iconColorDefault,
-        '--input-icon-color-hover': iconColorHover,
-        '--input-icon-color-active': iconColorActive,
-      } as React.CSSProperties & {
-        '--input-text-color': string
-        '--input-text-color-hover': string
-        '--input-text-color-active': string
-        '--input-border-color-hover': string
-        '--input-border-color-active': string
-        '--input-icon-color': string
-        '--input-icon-color-hover': string
-        '--input-icon-color-active': string
       }}
-      onMouseEnter={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.borderColor = 'var(--input-border-color-hover)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.borderColor = borderColorDefault
-        }
-      }}
-      onFocus={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.borderColor = 'var(--input-border-color-active)'
-        }
-      }}
-      onBlur={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.borderColor = borderColorDefault
-        }
-      }}
+      onMouseEnter={() => !disabled && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {leftIcon && (
         <span
@@ -116,7 +100,7 @@ export function Input({
           style={{
             width: '16px',
             height: '16px',
-            color: 'var(--input-icon-color)',
+            color: currentIconColor,
           }}
         >
           {leftIcon}
@@ -130,61 +114,15 @@ export function Input({
           'text-body-small'
         )}
         style={{
-          color: 'var(--input-text-color)',
+          color: currentTextColor,
           fontFamily: 'var(--font-inter), sans-serif',
           fontSize: '12px',
           lineHeight: '16px',
           letterSpacing: '0.25px',
         }}
         disabled={disabled}
-        onFocus={(e) => {
-          if (!disabled) {
-            e.target.style.color = 'var(--input-text-color-active)'
-            const container = e.target.closest('div')
-            if (container) {
-              container.style.borderColor = 'var(--input-border-color-active)'
-            }
-            // Update icon colors
-            const icons = container?.querySelectorAll('span')
-            icons?.forEach(icon => {
-              icon.style.color = 'var(--input-icon-color-active)'
-            })
-          }
-        }}
-        onBlur={(e) => {
-          if (!disabled) {
-            e.target.style.color = 'var(--input-text-color)'
-            const container = e.target.closest('div')
-            if (container) {
-              container.style.borderColor = borderColorDefault
-            }
-            // Reset icon colors
-            const icons = container?.querySelectorAll('span')
-            icons?.forEach(icon => {
-              icon.style.color = 'var(--input-icon-color)'
-            })
-          }
-        }}
-        onMouseEnter={(e) => {
-          if (!disabled && document.activeElement !== e.target) {
-            e.target.style.color = 'var(--input-text-color-hover)'
-            const container = e.target.closest('div')
-            const icons = container?.querySelectorAll('span')
-            icons?.forEach(icon => {
-              icon.style.color = 'var(--input-icon-color-hover)'
-            })
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!disabled && document.activeElement !== e.target) {
-            e.target.style.color = 'var(--input-text-color)'
-            const container = e.target.closest('div')
-            const icons = container?.querySelectorAll('span')
-            icons?.forEach(icon => {
-              icon.style.color = 'var(--input-icon-color)'
-            })
-          }
-        }}
+        onFocus={() => !disabled && setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         {...props}
       />
       {rightIcon && (
@@ -193,7 +131,7 @@ export function Input({
           style={{
             width: '16px',
             height: '16px',
-            color: 'var(--input-icon-color)',
+            color: currentIconColor,
           }}
         >
           {rightIcon}

@@ -254,8 +254,8 @@ export default function ComponentLibraryPage() {
               Sizes
             </Text>
             <div className="flex flex-col gap-[12px] max-w-[400px]">
-              <Input size="medium" placeholder="Medium input" />
-              <Input size="large" placeholder="Large input" />
+              <Input inputSize="medium" placeholder="Medium input" />
+              <Input inputSize="large" placeholder="Large input" />
             </div>
           </div>
 
