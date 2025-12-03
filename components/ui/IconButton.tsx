@@ -35,14 +35,14 @@ const sizeStyles: Record<IconButtonSize, {
   },
 }
 
-export function IconButton({
+export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton({
   icon,
   className,
   variant = 'navigation',
   size = 'medium',
   disabled,
   ...props
-}: IconButtonProps) {
+}, ref) {
   const sizeStyle = sizeStyles[size] || sizeStyles['medium']
 
   const baseClasses = 'group flex items-center justify-center transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2'
@@ -96,6 +96,7 @@ export function IconButton({
 
   return (
     <button
+      ref={ref}
       className={cn(
         baseClasses,
         getVariantClasses(),
@@ -126,5 +127,5 @@ export function IconButton({
       </span>
     </button>
   )
-}
+})
 

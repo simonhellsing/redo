@@ -3,7 +3,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Text'
-import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
+import { TableRow } from '@/components/ui/TableRow'
+import { TableHeaderControl } from '@/components/ui/TableHeaderControl'
+import { Divider } from '@/components/ui/Divider'
+import { Spinner } from '@/components/ui/Spinner'
 import { MdOutlineCloudUpload } from 'react-icons/md'
 
 interface ParsedCustomer {
@@ -43,6 +46,7 @@ export function UploadCustomerListModal({
   const [loadingLogos, setLoadingLogos] = useState<Set<number>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isFetchingLogosRef = useRef(false)
 
   const handleFileProcess = useCallback(async (file: File) => {
     if (!file.name.endsWith('.csv')) {
@@ -70,11 +74,17 @@ export function UploadCustomerListModal({
 
       const data = await response.json()
       const parsedCustomers = data.customers || []
+      
+      // Set customers and start logo fetching
       setCustomers(parsedCustomers)
       
       // Fetch logos progressively after customers are loaded
+      // Use setTimeout to ensure state is set before starting logo fetch
       if (parsedCustomers.length > 0) {
-        fetchLogosProgressively(parsedCustomers)
+        // Start logo fetching in next tick to ensure state is updated
+        Promise.resolve().then(() => {
+          fetchLogosProgressively(parsedCustomers)
+        })
       }
     } catch (err: any) {
       console.error('Error parsing CSV:', err)
@@ -84,47 +94,101 @@ export function UploadCustomerListModal({
     }
   }, [])
 
-  const fetchLogosProgressively = async (customersToFetch: ParsedCustomer[]) => {
-    // Fetch logos one at a time with 1.5 second delay between requests to avoid rate limiting
-    const delay = 1500 // 1.5 seconds between requests
+  const fetchLogosProgressively = useCallback(async (customersToFetch: ParsedCustomer[]) => {
+    // Prevent multiple simultaneous logo fetching processes
+    if (isFetchingLogosRef.current) {
+      console.warn('Logo fetching already in progress, skipping')
+      return
+    }
     
-    for (let i = 0; i < customersToFetch.length; i++) {
-      const customer = customersToFetch[i]
+    isFetchingLogosRef.current = true
+    
+    try {
+      // Fetch logos one at a time
+      console.log(`Starting to fetch logos for ${customersToFetch.length} customers`)
       
-      // Mark this customer as loading
-      setLoadingLogos(prev => new Set(prev).add(i))
-      
-      try {
-        const response = await fetch(`/api/brandfetch/search?query=${encodeURIComponent(customer.company_name.trim())}`)
+      for (let i = 0; i < customersToFetch.length; i++) {
+        const customer = customersToFetch[i]
+        const companyName = customer.company_name.trim()
         
-        if (response.ok) {
-          const data = await response.json()
-          if (data.logoUrl) {
-            // Update the customer with the logo
-            setCustomers(prev => {
-              const updated = [...prev]
-              updated[i] = { ...updated[i], logo_url: data.logoUrl }
-              return updated
-            })
-          }
+        if (!companyName) {
+          console.warn(`Skipping customer ${i + 1} - empty company name`)
+          continue
         }
-      } catch (error) {
-        console.error(`Error fetching logo for ${customer.company_name}:`, error)
-      } finally {
-        // Remove loading state
-        setLoadingLogos(prev => {
-          const next = new Set(prev)
-          next.delete(i)
-          return next
+        
+        console.log(`[${i + 1}/${customersToFetch.length}] Fetching logo for: "${companyName}"`)
+        
+        // Mark this customer as loading
+        setLoadingLogos(prev => new Set(prev).add(i))
+        
+        let logoUrl: string | null = null
+        let wasRateLimited = false
+        
+        // Single attempt with better rate limit handling
+        try {
+          const response = await fetch(
+            `/api/brandfetch/search?query=${encodeURIComponent(companyName)}`,
+            {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json',
+              },
+            }
+          )
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.logoUrl) {
+              logoUrl = data.logoUrl
+              console.log(`✓ Logo found for "${companyName}": ${logoUrl}`)
+            } else {
+              console.log(`✗ No logo found for "${companyName}"`)
+            }
+          } else if (response.status === 429) {
+            // Rate limited - wait much longer before continuing
+            wasRateLimited = true
+            const waitTime = 30000 // Wait 30 seconds if rate limited
+            console.warn(`Rate limited for "${companyName}", waiting ${waitTime}ms before continuing...`)
+            await new Promise(resolve => setTimeout(resolve, waitTime))
+            // Don't retry this one, just move on after waiting
+          } else {
+            const errorText = await response.text().catch(() => 'Unknown error')
+            console.warn(`API error for "${companyName}": ${response.status} - ${errorText}`)
+          }
+        } catch (error: any) {
+          console.error(`Error fetching logo for "${companyName}":`, error.message || error)
+        }
+      
+      // Update the customer with the logo (or null if not found)
+      if (logoUrl) {
+        setCustomers(prev => {
+          const updated = [...prev]
+          // Find customer by company name to avoid index issues
+          const customerIndex = updated.findIndex(c => c.company_name === customer.company_name)
+          if (customerIndex !== -1) {
+            updated[customerIndex] = { ...updated[customerIndex], logo_url: logoUrl }
+          }
+          return updated
         })
       }
       
-      // Add delay before next request (except for the last one)
-      if (i < customersToFetch.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, delay))
+      // Remove loading state
+      setLoadingLogos(prev => {
+        const next = new Set(prev)
+        next.delete(i)
+        return next
+      })
+      
+        // No delay between requests - fetch immediately
       }
+      
+      console.log(`Finished fetching logos for all ${customersToFetch.length} customers`)
+    } catch (error: any) {
+      console.error('Fatal error in fetchLogosProgressively:', error)
+    } finally {
+      isFetchingLogosRef.current = false
     }
-  }
+  }, [])
 
   // Process initial file when modal opens
   useEffect(() => {
@@ -228,13 +292,13 @@ export function UploadCustomerListModal({
         >
           <div className="flex flex-col gap-4 w-full flex-1 min-h-0 overflow-hidden">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex-shrink-0">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex-shrink-0 mx-[20px] mt-[40px]">
                 {error}
               </div>
             )}
 
             {!isLoading && customers.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 gap-4 flex-shrink-0">
+              <div className="flex flex-col items-center justify-center py-12 gap-4 flex-shrink-0 px-[20px] py-[40px]">
                 <div
                   className="flex items-center justify-center w-16 h-16 rounded-full bg-[var(--neutral-100)] cursor-pointer hover:bg-[var(--neutral-200)] transition-colors"
                   onClick={handleUploadClick}
@@ -256,8 +320,8 @@ export function UploadCustomerListModal({
             )}
 
             {isLoading && (
-              <div className="flex flex-col items-center justify-center py-12 gap-4 flex-shrink-0">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--neutral-600)]"></div>
+              <div className="flex flex-col items-center justify-center py-12 gap-4 flex-shrink-0 px-[20px] py-[40px]">
+                <Spinner size="xl" style={{ color: 'var(--neutral-600)' }} />
                 <Text variant="body-medium" style={{ color: 'var(--neutral-600)' }}>
                   Laddar kunder...
                 </Text>
@@ -267,57 +331,67 @@ export function UploadCustomerListModal({
             {!isLoading && customers.length > 0 && (
               <div className="w-full overflow-y-auto flex-1 min-h-0">
                 <div className="flex flex-col gap-0 items-start shrink-0 w-full">
-                  {/* Table Header */}
-                  <div className="bg-[var(--neutral-0)] flex gap-[32px] items-center h-[32px] px-[12px] py-[4px] rounded-[9px] w-full sticky top-0 z-10">
-                    <div className="flex-1 min-w-0">
-                      <span className="text-label-small text-[var(--neutral-800)]">Logo</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-label-small text-[var(--neutral-800)]">Namn</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-label-small text-[var(--neutral-800)]">Org. nummer</span>
-                    </div>
-                  </div>
-
-                  {/* Table Body */}
+                  {/* Table Body - No Header */}
                   <div className="flex flex-col gap-0 items-start shrink-0 w-full">
-                    {customers.map((customer, index) => (
-                      <React.Fragment key={index}>
-                        <div className="bg-[var(--neutral-0)] flex gap-[32px] h-[48px] items-center px-[12px] py-[4px] rounded-[12px] w-full transition-colors hover:bg-[var(--neutral-100)]">
-                          <div className="flex-1 min-w-0 flex items-center relative">
-                            {loadingLogos.has(index) ? (
-                              <div className="h-10 w-10 bg-gray-100 rounded flex items-center justify-center relative">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--neutral-600)]"></div>
+                    {customers.map((customer, index) => {
+                      // Determine logo URL - use loading placeholder if loading, otherwise use actual logo or null
+                      const logoUrl = loadingLogos.has(index) 
+                        ? undefined // Will show placeholder in DataTableCell
+                        : customer.logo_url || undefined
+                      
+                      return (
+                        <React.Fragment key={index}>
+                          <div className="relative w-full">
+                            <div className="bg-[var(--neutral-0)] flex gap-[32px] h-[48px] items-center px-[12px] py-[4px] rounded-[12px] w-full">
+                              {/* Logo + Name Column */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-[8px] rounded-[8px] p-[8px] w-full">
+                                  {loadingLogos.has(index) ? (
+                                    <div className="rounded-[8px] shrink-0 bg-[var(--neutral-200)] flex items-center justify-center" style={{ width: '24px', height: '24px' }}>
+                                      <Spinner size="sm" style={{ color: 'var(--neutral-600)' }} />
+                                    </div>
+                                  ) : logoUrl ? (
+                                    <img
+                                      src={logoUrl}
+                                      alt=""
+                                      className="rounded-[8px] shrink-0"
+                                      style={{ width: '24px', height: '24px', objectFit: 'cover' }}
+                                    />
+                                  ) : (
+                                    <div
+                                      className="rounded-[8px] shrink-0 bg-[var(--neutral-200)]"
+                                      style={{ width: '24px', height: '24px' }}
+                                    />
+                                  )}
+                                  <Text
+                                    variant="label-small"
+                                    as="span"
+                                    className="whitespace-pre text-[var(--neutral-700)] flex-1 min-w-0"
+                                  >
+                                    {customer.company_name}
+                                  </Text>
+                                </div>
                               </div>
-                            ) : customer.logo_url ? (
-                              <ImageWithFallback
-                                src={customer.logo_url}
-                                alt={`${customer.company_name} logo`}
-                                className="h-10 w-10 object-cover rounded"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs">
-                                No logo
+                              {/* Org Number Column */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-[8px] rounded-[8px] px-[8px] py-[12px] w-full">
+                                  <Text
+                                    variant="label-small"
+                                    as="span"
+                                    className="whitespace-pre text-[var(--neutral-500)] flex-1 min-w-0"
+                                  >
+                                    {customer.orgnr || '-'}
+                                  </Text>
+                                </div>
                               </div>
-                            )}
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <Text variant="label-medium" className="truncate">
-                              {customer.company_name}
-                            </Text>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <Text variant="body-small" style={{ color: 'var(--neutral-600)' }}>
-                              {customer.orgnr || '-'}
-                            </Text>
-                          </div>
-                        </div>
-                        {index < customers.length - 1 && (
-                          <div className="h-[1px] bg-[var(--neutral-200)] w-full" />
-                        )}
-                      </React.Fragment>
-                    ))}
+                          {index < customers.length - 1 && (
+                            <Divider variant="narrow" className="w-full" />
+                          )}
+                        </React.Fragment>
+                      )
+                    })}
                   </div>
                 </div>
               </div>

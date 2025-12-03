@@ -21,17 +21,16 @@ export function ModalHeader({
     <div
       className={cn(
         'bg-[var(--neutral-0)] border-b border-[var(--neutral-100)]',
-        'flex items-center justify-between px-[20px] py-[8px] rounded-t-[12px]',
+        'flex items-center justify-between px-[12px] py-[8px] rounded-t-[12px]',
         className
       )}
       {...props}
     >
       <Text
-        variant="title-small"
+        variant="label-medium"
         className="whitespace-nowrap"
         style={{
           color: 'var(--neutral-800)',
-          letterSpacing: '0.15px',
         }}
       >
         {title}

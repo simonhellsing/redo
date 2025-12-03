@@ -230,3 +230,101 @@ export async function PUT(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ customerId: string }> }
+) {
+  try {
+    const user = await requireAdministrator()
+    const { customerId } = await params
+    const supabase = await createServerSupabase()
+
+    // Verify customer exists and get workspace_id
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('workspace_id, logo_url')
+      .eq('id', customerId)
+      .single()
+
+    if (customerError || !customer) {
+      return NextResponse.json(
+        { error: 'Customer not found' },
+        { status: 404 }
+      )
+    }
+
+    // Verify workspace membership
+    const { data: workspace } = await supabase
+      .from('workspaces')
+      .select('owner_id')
+      .eq('id', customer.workspace_id)
+      .single()
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: 'Workspace not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check if user is owner or member
+    const isOwner = workspace.owner_id === user.id
+    const { data: membership } = await supabase
+      .from('workspace_members')
+      .select('*')
+      .eq('workspace_id', customer.workspace_id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (!isOwner && !membership) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this customer' },
+        { status: 403 }
+      )
+    }
+
+    // Delete customer logo from storage if it exists
+    if (customer.logo_url) {
+      try {
+        // Extract file path from logo URL
+        const logoPathMatch = customer.logo_url.match(/customer-logos\/(.+)$/)
+        if (logoPathMatch && logoPathMatch[1]) {
+          const { error: deleteError } = await supabase.storage
+            .from('customer-logos')
+            .remove([logoPathMatch[1]])
+
+          if (deleteError) {
+            console.error('Error deleting logo from storage:', deleteError)
+            // Continue with customer deletion even if logo deletion fails
+          }
+        }
+      } catch (logoError) {
+        console.error('Error processing logo deletion:', logoError)
+        // Continue with customer deletion even if logo deletion fails
+      }
+    }
+
+    // Delete customer (cascading deletes should handle related records)
+    const { error: deleteError } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', customerId)
+
+    if (deleteError) {
+      console.error('Customer delete error:', deleteError)
+      return NextResponse.json(
+        { error: `Failed to delete customer: ${deleteError.message}` },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Customer delete error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete customer' },
+      { status: 500 }
+    )
+  }
+}
+

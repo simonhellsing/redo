@@ -74,7 +74,7 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
           <div className="flex-1 relative">
             <QuickActionDropdown
               illustrationType="card"
-              label="Lägg till en ny kund"
+              label="Lägg till ny kund"
               menuItems={[
                 {
                   label: 'Lägg till en ny kund',

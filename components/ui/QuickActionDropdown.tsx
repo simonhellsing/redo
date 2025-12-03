@@ -84,8 +84,14 @@ export function QuickActionDropdown({
         onClick={handleClick}
         {...props}
       >
-        <div className="flex items-start justify-between w-full">
-          <Illustration type={illustrationType} size={48} />
+        <Illustration type={illustrationType} size={48} />
+        <div className="flex items-center gap-1 w-full">
+          <Text
+            variant="label-small"
+            className="text-[var(--neutral-700)]"
+          >
+            {label}
+          </Text>
           <MdOutlineArrowDropDown 
             style={{ 
               width: '20px', 
@@ -95,12 +101,6 @@ export function QuickActionDropdown({
             }} 
           />
         </div>
-        <Text
-          variant="label-small"
-          className="text-[var(--neutral-700)] min-w-full"
-        >
-          {label}
-        </Text>
       </div>
 
       {isMenuOpen && (

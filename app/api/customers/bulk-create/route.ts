@@ -71,6 +71,18 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error('Error creating customers:', insertError)
+      
+      // Check if the error is about missing columns
+      if (insertError.message.includes('schema cache') || insertError.message.includes('column')) {
+        return NextResponse.json(
+          { 
+            error: `Kunde inte lägga till kunder: ${insertError.message}. Kontrollera att databasmigreringen har körts (supabase-add-customer-fields.sql)`,
+            migrationRequired: true
+          },
+          { status: 500 }
+        )
+      }
+      
       return NextResponse.json(
         { error: `Kunde inte lägga till kunder: ${insertError.message}` },
         { status: 500 }

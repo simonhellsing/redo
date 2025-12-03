@@ -66,7 +66,7 @@ export function DashboardContent({ userName, customers }: DashboardContentProps)
         <div className="flex gap-[20px] items-start shrink-0 w-full">
           <QuickAction
             illustrationType="card"
-            label="Lägg till en ny kund"
+            label="Lägg till ny kund"
             onClick={openModal}
           />
           <QuickAction

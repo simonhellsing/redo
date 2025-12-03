@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Divider } from '@/components/ui/Divider'
@@ -8,13 +8,16 @@ import { Button } from '@/components/ui/Button'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { Illustration } from '@/components/ui/Illustration'
 import { Text } from '@/components/ui/Text'
+import { Spinner } from '@/components/ui/Spinner'
 import { SourceDocumentUploadForm } from '@/components/admin/SourceDocumentUploadForm'
-import { EditCustomerButton } from '@/components/admin/EditCustomerButton'
 import { CustomerLedgerReport } from '@/components/admin/CustomerLedgerReport'
 import { InviteCustomerUserButton } from '@/components/admin/InviteCustomerUserButton'
 import { PublishReportModal } from '@/components/admin/PublishReportModal'
+import { useAddCustomerModal } from '@/components/admin/AddCustomerModalContext'
+import { IconButton } from '@/components/ui/IconButton'
+import { Menu, MenuItem } from '@/components/ui/Menu'
 import { parseHuvudbokCsv, Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
-import { MdOutlineUpload, MdOutlinePublish } from 'react-icons/md'
+import { MdOutlineUpload, MdOutlinePublish, MdOutlineMoreVert } from 'react-icons/md'
 import type { Customer } from '@/lib/types/customer'
 
 interface SourceDocument {
@@ -65,6 +68,11 @@ export function CustomerDetailContent({
   latestHuvudbokUploadedAt,
 }: CustomerDetailContentProps) {
   const router = useRouter()
+  const { openEditModal } = useAddCustomerModal()
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+  const moreButtonRef = useRef<HTMLButtonElement>(null)
   const [showUploadForm, setShowUploadForm] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[] | null>(() => {
     // Load transactions from latest report if available
@@ -97,6 +105,63 @@ export function CustomerDetailContent({
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        moreMenuRef.current &&
+        !moreMenuRef.current.contains(event.target as Node) &&
+        moreButtonRef.current &&
+        !moreButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowMoreMenu(false)
+      }
+    }
+
+    if (showMoreMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [showMoreMenu])
+
+  const handleEditCustomer = () => {
+    openEditModal({
+      ...customer,
+      workspace_id: workspaceId,
+      status: (customer.status as 'Aktiv' | 'Passiv') || 'Aktiv',
+    })
+    setShowMoreMenu(false)
+  }
+
+  const handleDeleteCustomer = async () => {
+    if (!confirm(`Är du säker på att du vill radera kunden "${customer.name}"? Denna åtgärd kan inte ångras.`)) {
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/customers/${customer.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Kunde inte radera kunden')
+      }
+
+      // Redirect to customers list after successful deletion
+      router.push('/customers')
+    } catch (error) {
+      console.error('Error deleting customer:', error)
+      alert(error instanceof Error ? error.message : 'Kunde inte radera kunden. Försök igen.')
+    } finally {
+      setIsDeleting(false)
+      setShowMoreMenu(false)
+    }
+  }
 
   const customerLogo = customer.logo_url ? (
     <ImageWithFallback
@@ -250,6 +315,31 @@ export function CustomerDetailContent({
         }
         actions={
           <>
+            <div className="relative">
+              <IconButton
+                ref={moreButtonRef}
+                variant="navigation"
+                size="small"
+                icon={<MdOutlineMoreVert />}
+                aria-label="Mer alternativ"
+                onClick={() => setShowMoreMenu(!showMoreMenu)}
+              />
+              {showMoreMenu && (
+                <div
+                  ref={moreMenuRef}
+                  className="absolute right-0 top-full mt-[4px] z-50 min-w-[180px]"
+                >
+                  <Menu>
+                    <MenuItem onClick={handleEditCustomer}>
+                      Redigera kund
+                    </MenuItem>
+                    <MenuItem onClick={handleDeleteCustomer} disabled={isDeleting}>
+                      {isDeleting ? 'Raderar...' : 'Radera kund'}
+                    </MenuItem>
+                  </Menu>
+                </div>
+              )}
+            </div>
             {canPublish && (
               <Button
                 variant="primary"
@@ -261,15 +351,6 @@ export function CustomerDetailContent({
               </Button>
             )}
             <InviteCustomerUserButton customerId={customer.id} customerName={customer.name} />
-            <EditCustomerButton
-              customer={{
-                ...customer,
-                workspace_id: workspaceId,
-                status: (customer.status as 'Aktiv' | 'Passiv') || 'Aktiv',
-              }}
-            >
-              Redigera kund
-            </EditCustomerButton>
             <Button
               variant="primary"
               size="small"
@@ -299,7 +380,7 @@ export function CustomerDetailContent({
         {isParsing ? (
           // Loading State
           <div className="flex flex-col gap-[12px] items-center shrink-0 w-[240px]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--brand-primary)]"></div>
+            <Spinner size="xl" style={{ color: 'var(--brand-primary)' }} />
             <div className="text-center m-0 p-0">
               <Text
                 variant="label-small"
