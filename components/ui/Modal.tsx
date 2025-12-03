@@ -16,6 +16,7 @@ interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   cancelLabel?: string
   confirmLabel?: string
   confirmDisabled?: boolean
+  footerLeftContent?: React.ReactNode
   children?: React.ReactNode
 }
 
@@ -27,6 +28,7 @@ export function Modal({
   cancelLabel,
   confirmLabel,
   confirmDisabled,
+  footerLeftContent,
   children,
   className,
   ...props
@@ -56,6 +58,7 @@ export function Modal({
         cancelLabel={cancelLabel}
         confirmLabel={confirmLabel}
         confirmDisabled={confirmDisabled}
+        leftContent={footerLeftContent}
       />
     </div>
   )

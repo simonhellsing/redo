@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Revisongen - Financial Reporting & Analysis",
+  title: "Redo - Financial Reporting & Analysis",
   description: "Financial reporting and analysis for small businesses",
 };
 

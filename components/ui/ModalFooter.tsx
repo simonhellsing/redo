@@ -10,6 +10,7 @@ interface ModalFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   cancelLabel?: string
   confirmLabel?: string
   confirmDisabled?: boolean
+  leftContent?: React.ReactNode
 }
 
 export function ModalFooter({
@@ -18,6 +19,7 @@ export function ModalFooter({
   cancelLabel = 'Avbryt',
   confirmLabel = 'Lägg till kund',
   confirmDisabled,
+  leftContent,
   className,
   ...props
 }: ModalFooterProps) {
@@ -25,30 +27,37 @@ export function ModalFooter({
     <div
       className={cn(
         'bg-[var(--neutral-0)] border-t border-[var(--neutral-100)]',
-        'flex gap-[8px] items-center justify-end px-[20px] py-[8px] rounded-b-[12px]',
+        'flex gap-[8px] items-center justify-between px-[20px] py-[8px] rounded-b-[12px]',
         className
       )}
       {...props}
     >
-      {onCancel && (
-        <Button
-          variant="tertiary"
-          size="small"
-          onClick={onCancel}
-        >
-          {cancelLabel}
-        </Button>
+      {leftContent && (
+        <div className="flex items-center">
+          {leftContent}
+        </div>
       )}
-      {onConfirm && (
-        <Button
-          variant="primary"
-          size="small"
-          onClick={onConfirm}
-          disabled={confirmDisabled}
-        >
-          {confirmLabel}
-        </Button>
-      )}
+      <div className="flex gap-[8px] items-center ml-auto">
+        {onCancel && (
+          <Button
+            variant="tertiary"
+            size="small"
+            onClick={onCancel}
+          >
+            {cancelLabel}
+          </Button>
+        )}
+        {onConfirm && (
+          <Button
+            variant="primary"
+            size="small"
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+          >
+            {confirmLabel}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

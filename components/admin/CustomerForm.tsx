@@ -17,7 +17,7 @@ interface CustomerFormProps {
   workspaceId: string
   onSubmitSuccess?: () => void
   hideButtons?: boolean
-  formRef?: React.RefObject<HTMLFormElement>
+  formRef?: React.RefObject<HTMLFormElement | null>
   onSubmittingChange?: (isSubmitting: boolean) => void
 }
 
