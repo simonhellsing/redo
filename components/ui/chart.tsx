@@ -74,6 +74,10 @@ const ChartTooltipContent = React.forwardRef<
       indicator?: "line" | "dot" | "dashed"
       nameKey?: string
       labelKey?: string
+      // Recharts passes `payload` into custom tooltip content, but its type
+      // definitions don't expose it on the top-level props. We add it here
+      // explicitly so TypeScript understands it exists.
+      payload?: any[]
     }
 >(
   (
