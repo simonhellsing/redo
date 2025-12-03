@@ -35,6 +35,22 @@ const sizeStyles: Record<ButtonSize, {
     borderRadius: '8px',
     textVariant: 'label-small',
   },
+  // Aliases for legacy sizes
+  sm: {
+    padding: '8px 10px',
+    borderRadius: '6px',
+    textVariant: 'label-small',
+  },
+  md: {
+    padding: '12px 10px',
+    borderRadius: '8px',
+    textVariant: 'label-small',
+  },
+  lg: {
+    padding: '12px 10px',
+    borderRadius: '8px',
+    textVariant: 'label-small',
+  },
 }
 
 export function Button({
