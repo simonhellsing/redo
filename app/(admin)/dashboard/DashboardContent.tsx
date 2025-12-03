@@ -8,6 +8,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Table } from '@/components/ui/Table'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { useAddCustomerModal } from '@/components/admin/AddCustomerModalContext'
+import { MdOutlineUpload } from 'react-icons/md'
 
 interface Customer {
   id: string
@@ -39,7 +40,8 @@ export function DashboardContent({ userName, customers }: DashboardContentProps)
     heroImageUrl: customer.logo_url || undefined,
     defaultLabel: customer.org_number || '-',
     tag1Label: customer.hasSourceDocument ? 'Uppladdad' : 'Ej uppladdad',
-    tag1Variant: customer.hasSourceDocument ? ('positive' as const) : ('default' as const),
+    tag1Variant: customer.hasSourceDocument ? ('prominent' as const) : ('default' as const),
+    tag1Icon: customer.hasSourceDocument ? <MdOutlineUpload style={{ width: '16px', height: '16px' }} /> : undefined,
     tag2Label: customer.hasPublishedReport ? 'Publicerad' : 'Ej publicerad',
     tag2Variant: customer.hasPublishedReport ? ('positive' as const) : ('default' as const),
     actionLabel: 'Visa kund',

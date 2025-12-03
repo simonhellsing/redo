@@ -10,6 +10,7 @@ export type TagVariant = 'default' | 'prominent' | 'attention' | 'positive' | 'n
 interface TagProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: TagVariant
   children: React.ReactNode
+  icon?: React.ReactNode
 }
 
 const variantStyles: Record<TagVariant, {
@@ -48,9 +49,11 @@ export function Tag({
   children,
   variant = 'default',
   className,
+  icon,
   ...props
 }: TagProps) {
   const styles = variantStyles[variant]
+  const iconElement = icon || <MdOutlineErrorOutline style={{ width: '16px', height: '16px' }} />
 
   return (
     <div
@@ -65,7 +68,7 @@ export function Tag({
         className={cn('flex items-center justify-center shrink-0', styles.icon)}
         style={{ width: '16px', height: '16px' }}
       >
-        <MdOutlineErrorOutline style={{ width: '16px', height: '16px' }} />
+        {iconElement}
       </span>
       <Text
         variant="label-small"

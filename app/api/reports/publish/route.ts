@@ -1,4 +1,4 @@
-import { createServerSupabase } from '@/lib/supabase'
+import { createServerSupabase, createAdminSupabase } from '@/lib/supabase/server'
 import { requireAdministrator } from '@/lib/auth/requireAdministrator'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     await requireAdministrator()
     const supabase = await createServerSupabase()
+    const adminSupabase = createAdminSupabase()
     const { reportId, customerId } = await request.json()
 
     // Update report status
@@ -22,10 +23,10 @@ export async function POST(request: NextRequest) {
       throw updateError
     }
 
-    // Get customer email
+    // Get customer email and workspace_id
     const { data: customer } = await supabase
       .from('customers')
-      .select('contact_email')
+      .select('contact_email, workspace_id')
       .eq('id', customerId)
       .single()
 
@@ -45,8 +46,8 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (existingInvitation) {
-        // Update existing invitation
-        await supabase
+        // Update existing invitation using admin client to bypass RLS
+        await adminSupabase
           .from('invitations')
           .update({
             token,
@@ -54,14 +55,15 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', existingInvitation.id)
       } else {
-        // Create new invitation
-        await supabase
+        // Create new invitation using admin client to bypass RLS
+        await adminSupabase
           .from('invitations')
           .insert({
             email: customer.contact_email,
             token,
             type: 'customer',
             customer_id: customerId,
+            workspace_id: customer.workspace_id,
             expires_at: expiresAt.toISOString(),
           })
       }

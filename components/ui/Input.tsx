@@ -100,7 +100,7 @@ export function Input({
         </span>
       )}
       <input
-        type="text"
+        type={props.type || 'text'}
         className={cn(
           'flex-1 bg-transparent border-0 outline-0 transition-colors',
           'placeholder:text-[var(--neutral-400)]',

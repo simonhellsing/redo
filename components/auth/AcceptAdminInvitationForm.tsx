@@ -9,20 +9,18 @@ import { createClientSupabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-interface AcceptInvitationFormProps {
+interface AcceptAdminInvitationFormProps {
   invitation: {
     id: string
     token: string
     email: string
-    customer_id: string
-    workspace_id?: string
+    workspace_id: string
   }
-  customerName?: string
   workspaceName?: string
   workspaceLogo?: string | null
 }
 
-export function AcceptInvitationForm({ invitation, customerName, workspaceName, workspaceLogo }: AcceptInvitationFormProps) {
+export function AcceptAdminInvitationForm({ invitation, workspaceName, workspaceLogo }: AcceptAdminInvitationFormProps) {
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -56,8 +54,7 @@ export function AcceptInvitationForm({ invitation, customerName, workspaceName, 
           options: {
             data: {
               name,
-              role: 'customer',
-              customer_id: invitation.customer_id,
+              role: 'administrator',
             },
           },
         })
@@ -94,100 +91,34 @@ export function AcceptInvitationForm({ invitation, customerName, workspaceName, 
         return
       }
 
-      // Get current profile to check if user is already an administrator
+      // Get current profile to check if user already has a role
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
 
-      // Get customer to validate
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('workspace_id')
-        .eq('id', invitation.customer_id)
-        .single()
-
-      if (!customer) {
-        setError('Customer not found')
-        setIsLoading(false)
-        return
-      }
-
-      // Always use invitation.workspace_id as the source of truth
-      // This ensures the user is added to the workspace they were invited to
-      // If invitation.workspace_id is not set, fall back to customer.workspace_id but log a warning
-      const workspaceId = invitation.workspace_id || customer.workspace_id
-      
-      if (!workspaceId) {
-        setError('Workspace not found for this invitation')
-        setIsLoading(false)
-        return
-      }
-
-      // Validate that invitation workspace_id matches customer workspace_id if both exist
-      // If they don't match, use invitation.workspace_id (the source of truth for the invitation)
-      if (invitation.workspace_id && customer.workspace_id && invitation.workspace_id !== customer.workspace_id) {
-        console.warn('Workspace mismatch detected: invitation workspace_id does not match customer workspace_id. Using invitation workspace_id.', {
-          invitation_workspace_id: invitation.workspace_id,
-          customer_workspace_id: customer.workspace_id,
-          invitation_id: invitation.id,
-          customer_id: invitation.customer_id,
-        })
-      }
-      
-      // Always prioritize invitation.workspace_id if it exists
-      const finalWorkspaceId = invitation.workspace_id || customer.workspace_id
-
-      // If user is already an administrator, don't overwrite their role
-      // Instead, just link them to the customer while keeping their admin role
-      if (profile && profile.role === 'administrator') {
-        // Link user to customer without changing their role
-        if (invitation.customer_id && finalWorkspaceId) {
-          await supabase
-            .from('customer_users')
-            .upsert({
-              user_id: user.id,
-              customer_id: invitation.customer_id,
-              workspace_id: finalWorkspaceId,
-            }, {
-              onConflict: 'workspace_id,customer_id,user_id',
-            })
-        }
-
-        // Mark invitation as accepted
-        await supabase
-          .from('invitations')
-          .update({ accepted_at: new Date().toISOString() })
-          .eq('id', invitation.id)
-
-        // Redirect to admin overview since they're an admin
-        router.push('/overview')
-        router.refresh()
-        return
-      }
-
-      // For new customer users or existing customer users, update their profile
+      // Update or create profile with administrator role
       await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           name: name || profile?.name || user.user_metadata?.name || user.email?.split('@')[0],
-          role: 'customer',
+          role: 'administrator',
         }, {
           onConflict: 'id',
         })
 
-      // Link user to customer in customer_users table
-      if (invitation.customer_id && finalWorkspaceId) {
+      // Add user to workspace as a member
+      if (invitation.workspace_id) {
         await supabase
-          .from('customer_users')
+          .from('workspace_members')
           .upsert({
+            workspace_id: invitation.workspace_id,
             user_id: user.id,
-            customer_id: invitation.customer_id,
-            workspace_id: finalWorkspaceId,
+            role: 'collaborator',
           }, {
-            onConflict: 'workspace_id,customer_id,user_id',
+            onConflict: 'workspace_id,user_id',
           })
       }
 
@@ -197,7 +128,8 @@ export function AcceptInvitationForm({ invitation, customerName, workspaceName, 
         .update({ accepted_at: new Date().toISOString() })
         .eq('id', invitation.id)
 
-      router.push('/my-reports')
+      // Redirect to admin overview
+      router.push('/overview')
       router.refresh()
     } catch (err) {
       setError('An unexpected error occurred')
@@ -221,7 +153,7 @@ export function AcceptInvitationForm({ invitation, customerName, workspaceName, 
         )}
         <div className="flex flex-col gap-1 items-center relative shrink-0 w-full">
           <Text variant="title-large" className="text-center w-full" style={{ color: 'var(--neutral-800)' }}>
-            {workspaceName ? `Du har blivit inbjuden till en rapport från ${workspaceName}.` : 'Du har blivit inbjuden till en rapport.'}
+            {workspaceName ? `Du har blivit inbjuden som administratör för ${workspaceName}.` : 'Du har blivit inbjuden som administratör.'}
           </Text>
         </div>
       </div>

@@ -2,15 +2,7 @@
 
 import { Button } from '@/components/ui/Button'
 import { useAddCustomerModal } from './AddCustomerModalContext'
-
-interface Customer {
-  id: string
-  name: string
-  org_number: string | null
-  contact_email: string | null
-  notes: string | null
-  logo_url: string | null
-}
+import type { Customer } from '@/lib/types/customer'
 
 interface EditCustomerButtonProps {
   customer: Customer

@@ -37,8 +37,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirect authenticated users away from auth pages
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+  // Redirect authenticated users away from auth pages, but allow access to login for logout
+  // Only redirect if they're trying to access signup (not login, so they can logout and switch accounts)
+  if (user && request.nextUrl.pathname === '/signup') {
     return NextResponse.redirect(new URL('/overview', request.url))
   }
 

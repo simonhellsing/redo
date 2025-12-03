@@ -16,6 +16,8 @@ interface TableRowProps extends React.HTMLAttributes<HTMLDivElement> {
   tag2Label?: string
   tag1Variant?: 'default' | 'prominent' | 'attention' | 'positive' | 'negative'
   tag2Variant?: 'default' | 'prominent' | 'attention' | 'positive' | 'negative'
+  tag1Icon?: React.ReactNode
+  tag2Icon?: React.ReactNode
   actionLabel?: string
   onActionClick?: () => void
 }
@@ -29,6 +31,8 @@ export function TableRow({
   tag2Label = 'Ej publicerad',
   tag1Variant = 'default',
   tag2Variant = 'default',
+  tag1Icon,
+  tag2Icon,
   actionLabel = 'Visa kund',
   onActionClick,
   className,
@@ -79,7 +83,7 @@ export function TableRow({
             'flex items-center gap-[8px] rounded-[8px] px-[8px] py-[10px] w-full'
           )}
         >
-          <Tag variant={tag1Variant}>{tag1Label}</Tag>
+          <Tag variant={tag1Variant} icon={tag1Icon}>{tag1Label}</Tag>
         </div>
       </div>
       <div className="flex-1 min-w-0">
@@ -88,7 +92,7 @@ export function TableRow({
             'flex items-center gap-[8px] rounded-[8px] px-[8px] py-[10px] w-full'
           )}
         >
-          <Tag variant={tag2Variant}>{tag2Label}</Tag>
+          <Tag variant={tag2Variant} icon={tag2Icon}>{tag2Label}</Tag>
         </div>
       </div>
       <div className="flex-1 min-w-0">

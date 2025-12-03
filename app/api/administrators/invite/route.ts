@@ -1,17 +1,14 @@
 import { createServerSupabase, createAdminSupabase } from '@/lib/supabase/server'
 import { requireAdministrator } from '@/lib/auth/requireAdministrator'
+import { getUserWorkspace } from '@/lib/auth/getUserWorkspace'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ customerId: string }> }
-) {
+export async function POST(request: NextRequest) {
   try {
     await requireAdministrator()
     const supabase = await createServerSupabase()
     const adminSupabase = createAdminSupabase()
-    const { customerId } = await params
     const { email } = await request.json()
 
     if (!email) {
@@ -21,16 +18,12 @@ export async function POST(
       )
     }
 
-    // Verify customer exists and user has access
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('id, workspace_id')
-      .eq('id', customerId)
-      .single()
+    // Get current user's workspace
+    const workspace = await getUserWorkspace()
 
-    if (customerError || !customer) {
+    if (!workspace) {
       return NextResponse.json(
-        { error: 'Customer not found' },
+        { error: 'Workspace not found' },
         { status: 404 }
       )
     }
@@ -40,14 +33,13 @@ export async function POST(
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 30) // 30 days
 
-    // Check if invitation already exists for this email and customer
-    // Use admin client to bypass RLS for this check
+    // Check if invitation already exists for this email
     const { data: existingInvitation, error: checkError } = await adminSupabase
       .from('invitations')
       .select('*')
       .eq('email', email)
-      .eq('customer_id', customerId)
-      .eq('type', 'customer')
+      .eq('type', 'administrator')
+      .eq('workspace_id', workspace.id)
       .is('accepted_at', null)
       .maybeSingle()
 
@@ -80,9 +72,8 @@ export async function POST(
         .insert({
           email,
           token,
-          type: 'customer',
-          customer_id: customerId,
-          workspace_id: customer.workspace_id,
+          type: 'administrator',
+          workspace_id: workspace.id,
           expires_at: expiresAt.toISOString(),
         })
         .select()
@@ -110,7 +101,7 @@ export async function POST(
 
     // For dev: return the invitation link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'
-    const invitationLink = `${baseUrl}/customer/invite/${token}`
+    const invitationLink = `${baseUrl}/admin/invite/${token}`
 
     console.log('Returning invitation link:', invitationLink)
 
@@ -120,7 +111,7 @@ export async function POST(
       token, // Include token for debugging
     })
   } catch (error: any) {
-    console.error('Error creating customer invitation:', error)
+    console.error('Error creating administrator invitation:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to create invitation' },
       { status: 500 }

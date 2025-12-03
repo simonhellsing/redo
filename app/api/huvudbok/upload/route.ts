@@ -177,13 +177,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if there's an existing report for this customer and update it, or create new
-    const { data: existingReport } = await adminSupabase
+    const { data: existingReports } = await adminSupabase
       .from('reports')
       .select('id')
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+    
+    const existingReport = existingReports && existingReports.length > 0 ? existingReports[0] : null
 
     let report
     if (existingReport) {
@@ -191,6 +192,7 @@ export async function POST(request: NextRequest) {
       const { data: updatedReport, error: updateError } = await adminSupabase
         .from('reports')
         .update({
+          workspace_id: finalWorkspaceId,
           status: 'generated',
           report_content: reportContent,
           period_start: periodStart,
@@ -236,6 +238,7 @@ export async function POST(request: NextRequest) {
         .from('reports')
         .insert({
           customer_id: customerId,
+          workspace_id: finalWorkspaceId,
           status: 'generated',
           report_content: reportContent,
           period_start: periodStart,

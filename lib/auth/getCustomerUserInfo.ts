@@ -13,7 +13,7 @@ export async function getCustomerUserInfo() {
   // Get customer_user record to find which customer this user belongs to
   const { data: customerUser } = await supabase
     .from('customer_users')
-    .select('customer_id, customers(*, workspaces(*))')
+    .select('customer_id, workspace_id, customers(*, workspaces(*))')
     .eq('user_id', user.id)
     .limit(1)
     .single()
@@ -23,7 +23,8 @@ export async function getCustomerUserInfo() {
   }
 
   const customer = (customerUser as any).customers
-  const workspace = customer?.workspaces
+  // Use workspace_id from customer_users if available, otherwise from customer
+  const workspace = customer?.workspaces || (customerUser.workspace_id ? { id: customerUser.workspace_id } : null)
 
   return {
     user,

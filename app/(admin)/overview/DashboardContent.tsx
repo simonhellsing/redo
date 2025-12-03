@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Text } from '@/components/ui/Text'
 import { QuickAction } from '@/components/ui/QuickAction'
@@ -8,6 +8,8 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Table } from '@/components/ui/Table'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { useAddCustomerModal } from '@/components/admin/AddCustomerModalContext'
+import { InviteAdministratorButton } from '@/components/admin/InviteAdministratorButton'
+import { MdOutlineUpload } from 'react-icons/md'
 
 interface Customer {
   id: string
@@ -26,6 +28,7 @@ interface DashboardContentProps {
 export function DashboardContent({ userName, customers }: DashboardContentProps) {
   const router = useRouter()
   const { openModal } = useAddCustomerModal()
+  const [showInviteAdminModal, setShowInviteAdminModal] = useState(false)
 
   const tableColumns = [
     { label: 'Namn', width: '300px' },
@@ -39,7 +42,8 @@ export function DashboardContent({ userName, customers }: DashboardContentProps)
     heroImageUrl: customer.logo_url || undefined,
     defaultLabel: customer.org_number || '-',
     tag1Label: customer.hasSourceDocument ? 'Uppladdad' : 'Ej uppladdad',
-    tag1Variant: customer.hasSourceDocument ? ('positive' as const) : ('default' as const),
+    tag1Variant: customer.hasSourceDocument ? ('prominent' as const) : ('default' as const),
+    tag1Icon: customer.hasSourceDocument ? <MdOutlineUpload style={{ width: '16px', height: '16px' }} /> : undefined,
     tag2Label: customer.hasPublishedReport ? 'Publicerad' : 'Ej publicerad',
     tag2Variant: customer.hasPublishedReport ? ('positive' as const) : ('default' as const),
     actionLabel: 'Visa kund',
@@ -80,7 +84,16 @@ export function DashboardContent({ userName, customers }: DashboardContentProps)
             onClick={() => console.log('Publish report clicked')}
             className="flex-1"
           />
+          <QuickAction
+            illustrationType="card"
+            label="Bjud in administratör"
+            onClick={() => setShowInviteAdminModal(true)}
+            className="flex-1"
+          />
         </div>
+        {showInviteAdminModal && (
+          <InviteAdministratorButton onClose={() => setShowInviteAdminModal(false)} />
+        )}
       </div>
 
       {/* Customers Section */}

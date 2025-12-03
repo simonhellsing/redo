@@ -5,20 +5,15 @@ import React from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
+import { Textarea } from '@/components/ui/Textarea'
 import { UploadButton } from '@/components/ui/UploadButton'
 import { IconButton } from '@/components/ui/IconButton'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { MdOutlineDelete } from 'react-icons/md'
+import type { Customer } from '@/lib/types/customer'
 
 interface CustomerFormProps {
-  customer?: {
-    id: string
-    name: string
-    org_number: string | null
-    contact_email: string | null
-    notes: string | null
-    logo_url: string | null
-  }
+  customer?: Customer
   workspaceId: string
   onSubmitSuccess?: () => void
   hideButtons?: boolean
@@ -35,8 +30,21 @@ export function CustomerForm({
   onSubmittingChange,
 }: CustomerFormProps) {
   const [name, setName] = useState(customer?.name || '')
-  const [orgNumber, setOrgNumber] = useState(customer?.org_number || '')
-  const [contactEmail, setContactEmail] = useState(customer?.contact_email || '')
+  const [orgnr, setOrgnr] = useState(customer?.orgnr || customer?.org_number || '')
+  const [bolagsform, setBolagsform] = useState(customer?.bolagsform || '')
+  const [ansvarigKonsult, setAnsvarigKonsult] = useState(customer?.ansvarig_konsult || '')
+  const [kontaktperson, setKontaktperson] = useState(customer?.kontaktperson || '')
+  const [epost, setEpost] = useState(customer?.epost || customer?.contact_email || '')
+  const [telefon, setTelefon] = useState(customer?.telefon || '')
+  const [rakningsarStart, setRakningsarStart] = useState(
+    customer?.räkenskapsår_start ? customer.räkenskapsår_start.split('T')[0] : ''
+  )
+  const [rakningsarSlut, setRakningsarSlut] = useState(
+    customer?.räkenskapsår_slut ? customer.räkenskapsår_slut.split('T')[0] : ''
+  )
+  const [tjanster, setTjanster] = useState(customer?.tjänster || '')
+  const [fortnoxId, setFortnoxId] = useState(customer?.fortnox_id || '')
+  const [status, setStatus] = useState<'Aktiv' | 'Passiv'>(customer?.status || 'Aktiv')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [removeLogo, setRemoveLogo] = useState(false)
@@ -149,12 +157,50 @@ export function CustomerForm({
     onSubmittingChange?.(true)
     setError(null)
 
+    // Validation
+    if (!name.trim()) {
+      setError('Företagsnamn är obligatoriskt')
+      setIsSubmitting(false)
+      onSubmittingChange?.(false)
+      return
+    }
+
+    if (epost && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(epost)) {
+      setError('Ogiltig e-postadress')
+      setIsSubmitting(false)
+      onSubmittingChange?.(false)
+      return
+    }
+
+    if (rakningsarStart && isNaN(Date.parse(rakningsarStart))) {
+      setError('Ogiltigt startdatum för räkenskapsår')
+      setIsSubmitting(false)
+      onSubmittingChange?.(false)
+      return
+    }
+
+    if (rakningsarSlut && isNaN(Date.parse(rakningsarSlut))) {
+      setError('Ogiltigt slutdatum för räkenskapsår')
+      setIsSubmitting(false)
+      onSubmittingChange?.(false)
+      return
+    }
+
     try {
       const formData = new FormData()
       formData.append('workspace_id', workspaceId)
       formData.append('name', name)
-      if (orgNumber) formData.append('org_number', orgNumber)
-      if (contactEmail) formData.append('contact_email', contactEmail)
+      if (orgnr) formData.append('orgnr', orgnr)
+      if (bolagsform) formData.append('bolagsform', bolagsform)
+      if (ansvarigKonsult) formData.append('ansvarig_konsult', ansvarigKonsult)
+      if (kontaktperson) formData.append('kontaktperson', kontaktperson)
+      if (epost) formData.append('epost', epost)
+      if (telefon) formData.append('telefon', telefon)
+      if (rakningsarStart) formData.append('rakningsar_start', rakningsarStart)
+      if (rakningsarSlut) formData.append('rakningsar_slut', rakningsarSlut)
+      if (tjanster) formData.append('tjanster', tjanster)
+      if (fortnoxId) formData.append('fortnox_id', fortnoxId)
+      formData.append('status', status)
       if (logoFile) formData.append('logo', logoFile)
       if (useFetchedLogo && fetchedLogoUrl) {
         formData.append('logo_url', fetchedLogoUrl)
@@ -246,7 +292,7 @@ export function CustomerForm({
       </div>
 
       <div>
-        <Label htmlFor="name">Customer Name *</Label>
+        <Label htmlFor="name">Företagsnamn *</Label>
         <Input 
           id="name" 
           name="name" 
@@ -257,27 +303,151 @@ export function CustomerForm({
         />
       </div>
 
-      <div>
-        <Label htmlFor="org_number">Organization Number</Label>
-        <Input 
-          id="org_number" 
-          name="org_number" 
-          value={orgNumber}
-          onChange={(e) => setOrgNumber(e.target.value)}
-          disabled={isSubmitting}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="orgnr">Organisationsnummer</Label>
+          <Input 
+            id="orgnr" 
+            name="orgnr" 
+            value={orgnr}
+            onChange={(e) => setOrgnr(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="bolagsform">Bolagsform</Label>
+          <select
+            id="bolagsform"
+            name="bolagsform"
+            value={bolagsform}
+            onChange={(e) => setBolagsform(e.target.value)}
+            disabled={isSubmitting}
+            className="w-full h-10 px-4 py-2 bg-white border border-gray-300 rounded-md hover:border-gray-400 focus:border-gray-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+          >
+            <option value="">Välj bolagsform</option>
+            <option value="AB">AB</option>
+            <option value="EF">EF</option>
+            <option value="HB">HB</option>
+            <option value="Förening">Förening</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="ansvarig_konsult">Ansvarig konsult</Label>
+          <Input 
+            id="ansvarig_konsult" 
+            name="ansvarig_konsult" 
+            value={ansvarigKonsult}
+            onChange={(e) => setAnsvarigKonsult(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="kontaktperson">Kontaktperson</Label>
+          <Input 
+            id="kontaktperson" 
+            name="kontaktperson" 
+            value={kontaktperson}
+            onChange={(e) => setKontaktperson(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="epost">E-post</Label>
+          <Input 
+            id="epost" 
+            name="epost" 
+            type="email"
+            value={epost}
+            onChange={(e) => setEpost(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="telefon">Telefon</Label>
+          <Input 
+            id="telefon" 
+            name="telefon" 
+            type="tel"
+            value={telefon}
+            onChange={(e) => setTelefon(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="rakningsar_start">Räkenskapsår start</Label>
+          <Input 
+            id="rakningsar_start" 
+            name="rakningsar_start" 
+            type="date"
+            value={rakningsarStart}
+            onChange={(e) => setRakningsarStart(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="rakningsar_slut">Räkenskapsår slut</Label>
+          <Input 
+            id="rakningsar_slut" 
+            name="rakningsar_slut" 
+            type="date"
+            value={rakningsarSlut}
+            onChange={(e) => setRakningsarSlut(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
       </div>
 
       <div>
-        <Label htmlFor="contact_email">Contact Email</Label>
-        <Input 
-          id="contact_email" 
-          name="contact_email" 
-          type="email"
-          value={contactEmail}
-          onChange={(e) => setContactEmail(e.target.value)}
+        <Label htmlFor="tjanster">Tjänster</Label>
+        <Textarea 
+          id="tjanster" 
+          name="tjanster" 
+          value={tjanster}
+          onChange={(e) => setTjanster(e.target.value)}
           disabled={isSubmitting}
+          placeholder="t.ex. Bokföring, bokslut"
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="fortnox_id">Fortnox ID</Label>
+          <Input 
+            id="fortnox_id" 
+            name="fortnox_id" 
+            value={fortnoxId}
+            onChange={(e) => setFortnoxId(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="status">Status</Label>
+          <select
+            id="status"
+            name="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as 'Aktiv' | 'Passiv')}
+            disabled={isSubmitting}
+            className="w-full h-10 px-4 py-2 bg-white border border-gray-300 rounded-md hover:border-gray-400 focus:border-gray-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+          >
+            <option value="Aktiv">Aktiv</option>
+            <option value="Passiv">Passiv</option>
+          </select>
+        </div>
       </div>
 
       {!hideButtons ? (

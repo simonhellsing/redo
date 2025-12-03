@@ -2,15 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react'
 import { CustomerModal } from './AddCustomerModal'
-
-interface Customer {
-  id: string
-  name: string
-  org_number: string | null
-  contact_email: string | null
-  notes: string | null
-  logo_url: string | null
-}
+import type { Customer } from '@/lib/types/customer'
 
 interface AddCustomerModalContextType {
   openModal: () => void

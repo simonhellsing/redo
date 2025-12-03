@@ -33,7 +33,7 @@ export default async function DashboardPage() {
         .eq('customer_id', customer.id)
         .limit(1)
       
-      const hasPublishedReport = reports && reports.some(r => r.status === 'published')
+      const hasPublishedReport = reports ? reports.some(r => r.status === 'published') : false
       const hasSourceDocument = await supabase
         .from('source_documents')
         .select('id')
@@ -44,8 +44,8 @@ export default async function DashboardPage() {
 
       return {
         ...customer,
-        hasPublishedReport,
-        hasSourceDocument,
+        hasPublishedReport: hasPublishedReport ?? false,
+        hasSourceDocument: hasSourceDocument ?? false,
       }
     })
   )

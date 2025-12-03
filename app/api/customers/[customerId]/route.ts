@@ -13,8 +13,17 @@ export async function PUT(
     const formData = await request.formData()
     
     const name = formData.get('name') as string
-    const orgNumber = formData.get('org_number') as string | null
-    const contactEmail = formData.get('contact_email') as string | null
+    const orgnr = formData.get('orgnr') as string | null
+    const bolagsform = formData.get('bolagsform') as string | null
+    const ansvarigKonsult = formData.get('ansvarig_konsult') as string | null
+    const kontaktperson = formData.get('kontaktperson') as string | null
+    const epost = formData.get('epost') as string | null
+    const telefon = formData.get('telefon') as string | null
+    const rakningsarStart = formData.get('rakningsar_start') as string | null
+    const rakningsarSlut = formData.get('rakningsar_slut') as string | null
+    const tjanster = formData.get('tjanster') as string | null
+    const fortnoxId = formData.get('fortnox_id') as string | null
+    const status = (formData.get('status') as 'Aktiv' | 'Passiv') || 'Aktiv'
     const notes = formData.get('notes') as string | null
     const logoFile = formData.get('logo') as File | null
     const logoUrlParam = formData.get('logo_url') as string | null
@@ -176,8 +185,19 @@ export async function PUT(
     // Update customer
     const updateData: any = {
       name,
-      org_number: orgNumber || null,
-      contact_email: contactEmail || null,
+      orgnr: orgnr || null,
+      org_number: orgnr || null, // Keep for backward compatibility
+      bolagsform: bolagsform || null,
+      ansvarig_konsult: ansvarigKonsult || null,
+      kontaktperson: kontaktperson || null,
+      epost: epost || null,
+      contact_email: epost || null, // Keep for backward compatibility
+      telefon: telefon || null,
+      räkenskapsår_start: rakningsarStart || null,
+      räkenskapsår_slut: rakningsarSlut || null,
+      tjänster: tjanster || null,
+      fortnox_id: fortnoxId || null,
+      status: status || 'Aktiv',
       notes: notes || null,
     }
 

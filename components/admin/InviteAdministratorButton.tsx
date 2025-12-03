@@ -4,17 +4,15 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
 import { ModalFormField } from '@/components/ui/Modal'
 import { Text } from '@/components/ui/Text'
 
-interface InviteCustomerUserButtonProps {
-  customerId: string
-  customerName: string
+interface InviteAdministratorButtonProps {
+  onClose?: () => void
 }
 
-export function InviteCustomerUserButton({ customerId, customerName }: InviteCustomerUserButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function InviteAdministratorButton({ onClose }: InviteAdministratorButtonProps) {
+  const [isOpen, setIsOpen] = useState(true)
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +29,7 @@ export function InviteCustomerUserButton({ customerId, customerName }: InviteCus
     setSuccess(null)
 
     try {
-      const response = await fetch(`/api/customers/${customerId}/invite`, {
+      const response = await fetch('/api/administrators/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -52,31 +50,25 @@ export function InviteCustomerUserButton({ customerId, customerName }: InviteCus
     }
   }
 
-  return (
-    <>
-      <Button
-        variant="secondary"
-        size="small"
-        onClick={() => setIsOpen(true)}
-      >
-        Bjud in kundanvändare
-      </Button>
+  if (!isOpen) return null
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <Modal
-            title="Bjud in kundanvändare"
+            title="Bjud in administratör"
             onClose={() => {
               setIsOpen(false)
               setEmail('')
               setError(null)
               setSuccess(null)
+              onClose?.()
             }}
             onCancel={() => {
               setIsOpen(false)
               setEmail('')
               setError(null)
               setSuccess(null)
+              onClose?.()
             }}
             onConfirm={handleInvite}
             confirmLabel="Skicka inbjudan"
@@ -85,7 +77,7 @@ export function InviteCustomerUserButton({ customerId, customerName }: InviteCus
           >
             <div className="flex flex-col gap-[16px] w-full">
               <Text variant="body-medium" className="text-[var(--neutral-700)]">
-                Skicka en inbjudan till en kundanvändare för {customerName}. De kommer att få ett e-postmeddelande med en länk för att skapa ett konto.
+                Skicka en inbjudan till en ny administratör. De kommer att få ett e-postmeddelande med en länk för att skapa ett konto och få tillgång till administrationsgränssnittet.
               </Text>
 
               <ModalFormField label="E-postadress">
@@ -93,7 +85,7 @@ export function InviteCustomerUserButton({ customerId, customerName }: InviteCus
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="kund@example.com"
+                  placeholder="admin@example.com"
                   disabled={isLoading}
                 />
               </ModalFormField>
@@ -112,8 +104,6 @@ export function InviteCustomerUserButton({ customerId, customerName }: InviteCus
             </div>
           </Modal>
         </div>
-      )}
-    </>
   )
 }
 

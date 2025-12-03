@@ -17,6 +17,8 @@ export type TableRowData = {
   tag2Label: string
   tag1Variant?: 'default' | 'prominent' | 'attention' | 'positive' | 'negative'
   tag2Variant?: 'default' | 'prominent' | 'attention' | 'positive' | 'negative'
+  tag1Icon?: React.ReactNode
+  tag2Icon?: React.ReactNode
   actionLabel?: string
   onActionClick?: () => void
 }
@@ -93,6 +95,8 @@ export function Table({
               tag2Label={row.tag2Label}
               tag1Variant={row.tag1Variant}
               tag2Variant={row.tag2Variant}
+              tag1Icon={row.tag1Icon}
+              tag2Icon={row.tag2Icon}
               actionLabel={row.actionLabel}
               onActionClick={row.onActionClick}
               className="w-full"
