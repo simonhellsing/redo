@@ -22,3 +22,15 @@ export function formatNumberSEK(value: number): string {
   }).format(value)
 }
 
+/**
+ * Formats a number in compact "mkr" (million kronor) format
+ * Example: 3450000 -> "3,45 mkr"
+ */
+export function formatMillionSEK(value: number): string {
+  const millions = value / 1000000
+  return new Intl.NumberFormat('sv-SE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(millions) + ' mkr'
+}
+
