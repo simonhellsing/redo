@@ -3,12 +3,13 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Text } from '@/components/ui/Text'
-import { QuickAction } from '@/components/ui/QuickAction'
+import { QuickActionDropdown } from '@/components/ui/QuickActionDropdown'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Table } from '@/components/ui/Table'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { useAddCustomerModal } from '@/components/admin/AddCustomerModalContext'
 import { InviteAdministratorButton } from '@/components/admin/InviteAdministratorButton'
+import { UploadCustomerListModal } from '@/components/admin/UploadCustomerListModal'
 import { MdOutlineUpload } from 'react-icons/md'
 
 interface Customer {
@@ -23,12 +24,14 @@ interface Customer {
 interface DashboardContentProps {
   userName: string
   customers: Customer[]
+  workspaceId: string
 }
 
-export function DashboardContent({ userName, customers }: DashboardContentProps) {
+export function DashboardContent({ userName, customers, workspaceId }: DashboardContentProps) {
   const router = useRouter()
   const { openModal } = useAddCustomerModal()
   const [showInviteAdminModal, setShowInviteAdminModal] = useState(false)
+  const [showUploadCustomerListModal, setShowUploadCustomerListModal] = useState(false)
 
   const tableColumns = [
     { label: 'Namn', width: '300px' },
@@ -65,13 +68,23 @@ export function DashboardContent({ userName, customers }: DashboardContentProps)
         >
           Välkommen tillbaka, {userName}!
         </Text>
-        <div className="flex gap-[20px] items-start shrink-0 w-full">
-          <QuickAction
-            illustrationType="card"
-            label="Lägg till en ny kund"
-            onClick={openModal}
-            className="flex-1"
-          />
+        <div className="flex gap-[20px] items-start shrink-0 w-full relative">
+          <div className="flex-1 relative">
+            <QuickActionDropdown
+              illustrationType="card"
+              label="Lägg till en ny kund"
+              menuItems={[
+                {
+                  label: 'Lägg till en ny kund',
+                  onClick: openModal,
+                },
+                {
+                  label: 'Ladda upp kundlista',
+                  onClick: () => setShowUploadCustomerListModal(true),
+                },
+              ]}
+            />
+          </div>
           <QuickAction
             illustrationType="binder"
             label="Ladda upp en huvudbok"
