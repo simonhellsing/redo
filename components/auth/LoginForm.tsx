@@ -133,7 +133,7 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           disabled={isLoading}
-          size="large"
+          inputSize="large"
           className="w-full"
         />
       </div>
@@ -147,7 +147,7 @@ export function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           disabled={isLoading}
-          size="large"
+          inputSize="large"
           className="w-full"
           rightIcon={
             <button

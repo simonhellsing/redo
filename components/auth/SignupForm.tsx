@@ -141,7 +141,7 @@ export function SignupForm() {
           onChange={(e) => setName(e.target.value)}
           required
           disabled={isLoading}
-          size="large"
+          inputSize="large"
           className="w-full"
         />
       </div>
@@ -155,7 +155,7 @@ export function SignupForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           disabled={isLoading}
-          size="large"
+          inputSize="large"
           className="w-full"
         />
       </div>
@@ -170,7 +170,7 @@ export function SignupForm() {
           required
           disabled={isLoading}
           minLength={6}
-          size="large"
+          inputSize="large"
           className="w-full"
           rightIcon={
             <button
