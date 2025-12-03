@@ -15,15 +15,7 @@ import { InviteCustomerUserButton } from '@/components/admin/InviteCustomerUserB
 import { PublishReportModal } from '@/components/admin/PublishReportModal'
 import { parseHuvudbokCsv, Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
 import { MdOutlineUpload, MdOutlinePublish } from 'react-icons/md'
-
-interface Customer {
-  id: string
-  name: string
-  logo_url?: string | null
-  org_number?: string | null
-  contact_email?: string | null
-  notes?: string | null
-}
+import type { Customer } from '@/lib/types/customer'
 
 interface SourceDocument {
   id: string
@@ -271,12 +263,9 @@ export function CustomerDetailContent({
             <InviteCustomerUserButton customerId={customer.id} customerName={customer.name} />
             <EditCustomerButton
               customer={{
-                id: customer.id,
-                name: customer.name,
-                org_number: customer.org_number || null,
-                contact_email: customer.contact_email || null,
-                notes: customer.notes || null,
-                logo_url: customer.logo_url || null,
+                ...customer,
+                workspace_id: workspaceId,
+                status: (customer.status as 'Aktiv' | 'Passiv') || 'Aktiv',
               }}
             >
               Redigera kund

@@ -65,12 +65,9 @@ export default async function CustomersPage() {
                       <ButtonLink href={`/customers/${customer.id}`} variant="ghost" size="sm">View</ButtonLink>
                       <EditCustomerLink
                         customer={{
-                          id: customer.id,
-                          name: customer.name,
-                          org_number: customer.org_number || null,
-                          contact_email: customer.contact_email || null,
-                          notes: customer.notes || null,
-                          logo_url: customer.logo_url || null,
+                          ...customer,
+                          workspace_id: workspace?.id || '',
+                          status: (customer.status as 'Aktiv' | 'Passiv') || 'Aktiv',
                         }}
                         className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
                       >
