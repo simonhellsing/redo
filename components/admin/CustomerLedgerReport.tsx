@@ -14,10 +14,13 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
   Legend,
 } from 'recharts'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
 
 interface CustomerLedgerReportProps {
   transactions: Transaction[]
@@ -76,7 +79,7 @@ export function CustomerLedgerReport({
             <Text variant="label-small" className="text-[var(--neutral-500)]">
               Totala intäkter
             </Text>
-            <Text variant="heading-medium" className="text-[var(--neutral-900)]">
+            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
               {formatCurrencySEK(kpis.revenue)}
             </Text>
             <Text variant="label-small" className="text-[var(--neutral-500)]">
@@ -90,7 +93,7 @@ export function CustomerLedgerReport({
             <Text variant="label-small" className="text-[var(--neutral-500)]">
               Totala kostnader
             </Text>
-            <Text variant="heading-medium" className="text-[var(--neutral-900)]">
+            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
               {formatCurrencySEK(kpis.expenses)}
             </Text>
             <Text variant="label-small" className="text-[var(--neutral-500)]">
@@ -105,7 +108,7 @@ export function CustomerLedgerReport({
               Nettoresultat
             </Text>
             <Text
-              variant="heading-medium"
+              variant="headline-medium"
               className={
                 kpis.netProfit >= 0
                   ? 'text-[var(--positive-500)]'
@@ -125,7 +128,7 @@ export function CustomerLedgerReport({
             <Text variant="label-small" className="text-[var(--neutral-500)]">
               Kassa vid periodens slut
             </Text>
-            <Text variant="heading-medium" className="text-[var(--neutral-900)]">
+            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
               {formatCurrencySEK(kpis.cashEnd)}
             </Text>
             <Text variant="label-small" className="text-[var(--neutral-500)]">
@@ -139,7 +142,7 @@ export function CustomerLedgerReport({
             <Text variant="label-small" className="text-[var(--neutral-500)]">
               Kundfordringar (1510)
             </Text>
-            <Text variant="heading-medium" className="text-[var(--neutral-900)]">
+            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
               {formatCurrencySEK(kpis.accountsReceivable)}
             </Text>
             <Text variant="label-small" className="text-[var(--neutral-500)]">
@@ -153,7 +156,7 @@ export function CustomerLedgerReport({
             <Text variant="label-small" className="text-[var(--neutral-500)]">
               Leverantörsskulder (2440)
             </Text>
-            <Text variant="heading-medium" className="text-[var(--neutral-900)]">
+            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
               {formatCurrencySEK(kpis.accountsPayable)}
             </Text>
             <Text variant="label-small" className="text-[var(--neutral-500)]">
@@ -168,82 +171,110 @@ export function CustomerLedgerReport({
         {/* Monthly Profit Line Chart */}
         <Card padding="lg">
           <div className="flex flex-col gap-4">
-            <Text variant="heading-small" className="text-[var(--neutral-900)]">
+            <Text variant="title-small" className="text-[var(--neutral-900)]">
               Månadsvis resultat
             </Text>
-            <ResponsiveContainer width="100%" height={300}>
+            <ChartContainer
+              config={{
+                profit: {
+                  label: 'Resultat',
+                  color: 'var(--positive-500)',
+                },
+              }}
+              className="h-[300px] w-full"
+            >
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--neutral-200)" />
                 <XAxis
                   dataKey="monthShort"
-                  stroke="#6b7280"
+                  stroke="var(--neutral-500)"
                   style={{ fontSize: '12px' }}
+                  tickLine={false}
+                  axisLine={false}
                 />
                 <YAxis
-                  stroke="#6b7280"
+                  stroke="var(--neutral-500)"
                   style={{ fontSize: '12px' }}
                   tickFormatter={(value) => formatNumberSEK(value)}
+                  tickLine={false}
+                  axisLine={false}
                 />
-                <Tooltip
-                  formatter={(value: number) => formatCurrencySEK(value)}
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value: any) => formatCurrencySEK(Number(value))}
+                    />
+                  }
                 />
                 <Line
                   type="monotone"
                   dataKey="profit"
-                  stroke="var(--brand-primary, #10b981)"
+                  stroke="var(--positive-500)"
                   strokeWidth={2}
-                  dot={{ fill: 'var(--brand-primary, #10b981)', r: 4 }}
+                  dot={{ fill: 'var(--positive-500)', r: 4 }}
                 />
               </LineChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </Card>
 
         {/* Revenue vs Expenses Bar Chart */}
         <Card padding="lg">
           <div className="flex flex-col gap-4">
-            <Text variant="heading-small" className="text-[var(--neutral-900)]">
+            <Text variant="title-small" className="text-[var(--neutral-900)]">
               Intäkter vs Kostnader
             </Text>
-            <ResponsiveContainer width="100%" height={300}>
+            <ChartContainer
+              config={{
+                revenue: {
+                  label: 'Intäkter',
+                  color: 'var(--positive-500)',
+                },
+                expenses: {
+                  label: 'Kostnader',
+                  color: 'var(--negative-500)',
+                },
+              }}
+              className="h-[300px] w-full"
+            >
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--neutral-200)" />
                 <XAxis
                   dataKey="monthShort"
-                  stroke="#6b7280"
+                  stroke="var(--neutral-500)"
                   style={{ fontSize: '12px' }}
+                  tickLine={false}
+                  axisLine={false}
                 />
                 <YAxis
-                  stroke="#6b7280"
+                  stroke="var(--neutral-500)"
                   style={{ fontSize: '12px' }}
                   tickFormatter={(value) => formatNumberSEK(value)}
+                  tickLine={false}
+                  axisLine={false}
                 />
-                <Tooltip
-                  formatter={(value: number) => formatCurrencySEK(value)}
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value: any) => formatCurrencySEK(Number(value))}
+                    />
+                  }
                 />
                 <Legend />
                 <Bar
                   dataKey="revenue"
-                  fill="var(--positive-500, #10b981)"
+                  fill="var(--positive-500)"
                   name="Intäkter"
+                  radius={4}
                 />
                 <Bar
                   dataKey="expenses"
-                  fill="var(--negative-500, #ef4444)"
+                  fill="var(--negative-500)"
                   name="Kostnader"
+                  radius={4}
                 />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </Card>
       </div>
@@ -251,7 +282,7 @@ export function CustomerLedgerReport({
       {/* Transaction Preview Table */}
       <Card padding="lg">
         <div className="flex flex-col gap-4">
-          <Text variant="heading-small" className="text-[var(--neutral-900)]">
+          <Text variant="headline-small" className="text-[var(--neutral-900)]">
             Senaste transaktioner
           </Text>
           <div className="overflow-x-auto">

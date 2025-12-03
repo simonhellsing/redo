@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const contactEmail = formData.get('contact_email') as string | null
     const notes = formData.get('notes') as string | null
     const logoFile = formData.get('logo') as File | null
+    const logoUrlParam = formData.get('logo_url') as string | null
 
     if (!workspaceId || !name) {
       return NextResponse.json(
@@ -24,8 +25,12 @@ export async function POST(request: NextRequest) {
 
     let logoUrl: string | null = null
 
-    // Upload logo if provided
-    if (logoFile && logoFile.size > 0) {
+    // Use provided logo URL (e.g., from Brandfetch) if available
+    if (logoUrlParam) {
+      logoUrl = logoUrlParam
+    }
+    // Upload logo file if provided
+    else if (logoFile && logoFile.size > 0) {
       console.log('Starting logo upload:', {
         fileName: logoFile.name,
         fileSize: logoFile.size,

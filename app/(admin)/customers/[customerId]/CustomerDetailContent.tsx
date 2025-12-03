@@ -11,6 +11,7 @@ import { Text } from '@/components/ui/Text'
 import { SourceDocumentUploadForm } from '@/components/admin/SourceDocumentUploadForm'
 import { EditCustomerButton } from '@/components/admin/EditCustomerButton'
 import { CustomerLedgerReport } from '@/components/admin/CustomerLedgerReport'
+import { InviteCustomerUserButton } from '@/components/admin/InviteCustomerUserButton'
 import { parseHuvudbokCsv, Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
 import { MdOutlineUpload } from 'react-icons/md'
 
@@ -36,6 +37,21 @@ interface Report {
   customer_id: string
   status: string
   created_at: string
+  report_content?: {
+    transactions?: Array<{
+      accountNumber: string
+      accountName: string
+      date: string // ISO string
+      text: string
+      info: string
+      debit: number
+      credit: number
+      balanceAfter: number | null
+    }>
+    kpis?: any
+    monthlySummaries?: any
+    uploadedAt?: string
+  }
 }
 
 interface CustomerDetailContentProps {
@@ -43,6 +59,8 @@ interface CustomerDetailContentProps {
   sourceDocuments: SourceDocument[]
   reports: Report[]
   workspaceId: string
+  latestReport?: Report | null
+  latestHuvudbokUploadedAt?: string | null
 }
 
 export function CustomerDetailContent({
@@ -50,13 +68,39 @@ export function CustomerDetailContent({
   sourceDocuments,
   reports,
   workspaceId,
+  latestReport,
+  latestHuvudbokUploadedAt,
 }: CustomerDetailContentProps) {
   const router = useRouter()
   const [showUploadForm, setShowUploadForm] = useState(false)
-  const [transactions, setTransactions] = useState<Transaction[] | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[] | null>(() => {
+    // Load transactions from latest report if available
+    if (latestReport?.report_content?.transactions) {
+      return latestReport.report_content.transactions.map(t => ({
+        accountNumber: t.accountNumber,
+        accountName: t.accountName,
+        date: new Date(t.date),
+        text: t.text,
+        info: t.info,
+        debit: t.debit,
+        credit: t.credit,
+        balanceAfter: t.balanceAfter,
+      }))
+    }
+    return null
+  })
   const [isParsing, setIsParsing] = useState(false)
   const [parseError, setParseError] = useState<string | null>(null)
-  const [uploadedAt, setUploadedAt] = useState<Date | null>(null)
+  const [uploadedAt, setUploadedAt] = useState<Date | null>(() => {
+    // Load upload date from latest report or source document
+    if (latestReport?.report_content?.uploadedAt) {
+      return new Date(latestReport.report_content.uploadedAt)
+    }
+    if (latestHuvudbokUploadedAt) {
+      return new Date(latestHuvudbokUploadedAt)
+    }
+    return null
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const customerLogo = customer.logo_url ? (
@@ -81,9 +125,41 @@ export function CustomerDetailContent({
     setParseError(null)
 
     try {
-      const parsed = await parseHuvudbokCsv(file)
-      setTransactions(parsed)
-      setUploadedAt(new Date())
+      // Upload to API which will parse and save to database
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('customer_id', customer.id)
+      formData.append('workspace_id', workspaceId)
+
+      const response = await fetch('/api/huvudbok/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to upload huvudbok')
+      }
+
+      const data = await response.json()
+
+      // Convert ISO date strings back to Date objects
+      const parsedTransactions: Transaction[] = data.transactions.map((t: any) => ({
+        accountNumber: t.accountNumber,
+        accountName: t.accountName,
+        date: new Date(t.date),
+        text: t.text,
+        info: t.info,
+        debit: t.debit,
+        credit: t.credit,
+        balanceAfter: t.balanceAfter,
+      }))
+
+      setTransactions(parsedTransactions)
+      setUploadedAt(new Date(data.uploadedAt))
+
+      // Refresh the page to get updated data from server
+      router.refresh()
     } catch (error) {
       setParseError(
         error instanceof Error
@@ -146,6 +222,7 @@ export function CustomerDetailContent({
         }
         actions={
           <>
+            <InviteCustomerUserButton customerId={customer.id} customerName={customer.name} />
             <EditCustomerButton
               customer={{
                 id: customer.id,

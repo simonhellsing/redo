@@ -56,6 +56,18 @@ export function AcceptInvitationForm({ invitation }: AcceptInvitationFormProps) 
           .from('profiles')
           .update({ role: 'customer' })
           .eq('id', user.id)
+
+        // Link user to customer in customer_users table
+        if (invitation.customer_id) {
+          await supabase
+            .from('customer_users')
+            .upsert({
+              user_id: user.id,
+              customer_id: invitation.customer_id,
+            }, {
+              onConflict: 'user_id,customer_id',
+            })
+        }
       }
 
       // Mark invitation as accepted

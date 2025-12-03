@@ -41,11 +41,18 @@ export default async function CustomerDetailPage({
     .eq('customer_id', customerId)
     .order('created_at', { ascending: false })
 
+  // Get the latest report with huvudbok data
+  const latestReport = reports && reports.length > 0 ? reports[0] : null
+
   const { data: sourceDocuments } = await supabase
     .from('source_documents')
     .select('*')
     .eq('customer_id', customerId)
+    .eq('type', 'general_ledger')
     .order('uploaded_at', { ascending: false })
+
+  // Get the latest huvudbok upload date
+  const latestHuvudbok = sourceDocuments && sourceDocuments.length > 0 ? sourceDocuments[0] : null
 
   return (
     <CustomerDetailContent
@@ -53,6 +60,8 @@ export default async function CustomerDetailPage({
       sourceDocuments={sourceDocuments || []}
       reports={reports || []}
       workspaceId={workspace?.id || ''}
+      latestReport={latestReport}
+      latestHuvudbokUploadedAt={latestHuvudbok?.uploaded_at || null}
     />
   )
 }

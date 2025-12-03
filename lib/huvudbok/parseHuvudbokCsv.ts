@@ -130,6 +130,128 @@ function findHeaderRowIndex(rows: string[][]): number {
 }
 
 /**
+ * Parses a huvudbok CSV from text string (for server-side use)
+ */
+export async function parseHuvudbokCsvFromText(
+  csvText: string,
+  fileName?: string
+): Promise<Transaction[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvText, {
+      encoding: 'UTF-8',
+      complete: (results) => {
+        try {
+          const rows = results.data as string[][]
+          
+          // Find the header row
+          const headerIndex = findHeaderRowIndex(rows)
+          if (headerIndex === -1) {
+            reject(new Error('Could not find header row in CSV'))
+            return
+          }
+          
+          // Start processing from after the header row
+          const dataRows = rows.slice(headerIndex + 1)
+          
+          const transactions: Transaction[] = []
+          let currentAccountNumber: string | null = null
+          let currentAccountName: string | null = null
+          
+          for (const row of dataRows) {
+            // Skip empty rows or separator rows
+            if (row.length === 0 || isSeparatorRow(row)) {
+              continue
+            }
+            
+            // Map row to RawRow structure
+            const rawRow: RawRow = {
+              konto: row[0]?.trim() || null,
+              namnVernr: row[1]?.trim() || null,
+              ks: row[2]?.trim() || null,
+              datum: row[4]?.trim() || null, // Skip blank column at index 3
+              text: row[5]?.trim() || null,
+              transaktionsinfo: row[6]?.trim() || null,
+              debet: row[7]?.trim() || null,
+              kredit: row[8]?.trim() || null,
+              saldo: row[9]?.trim() || null,
+            }
+            
+            // Check if this is a new account section
+            if (isAccountNumber(rawRow.konto)) {
+              currentAccountNumber = rawRow.konto
+              currentAccountName = rawRow.namnVernr || ''
+              continue
+            }
+            
+            // Skip if we don't have a current account
+            if (!currentAccountNumber || !currentAccountName) {
+              continue
+            }
+            
+            // Skip summary rows
+            if (isSummaryRow(rawRow.text)) {
+              continue
+            }
+            
+            // Skip rows without a date (not a transaction)
+            if (!rawRow.datum || rawRow.datum.trim() === '') {
+              continue
+            }
+            
+            // Parse the date
+            let date: Date
+            try {
+              // Parse YYYY-MM-DD format
+              const dateParts = rawRow.datum.split('-')
+              if (dateParts.length === 3) {
+                date = new Date(
+                  parseInt(dateParts[0], 10),
+                  parseInt(dateParts[1], 10) - 1, // Month is 0-indexed
+                  parseInt(dateParts[2], 10)
+                )
+              } else {
+                // Try parsing as-is
+                date = new Date(rawRow.datum)
+              }
+              
+              if (isNaN(date.getTime())) {
+                continue // Skip invalid dates
+              }
+            } catch {
+              continue // Skip rows with invalid dates
+            }
+            
+            // Parse amounts
+            const debit = normalizeSwedishNumber(rawRow.debet) || 0
+            const credit = normalizeSwedishNumber(rawRow.kredit) || 0
+            const balanceAfter = normalizeSwedishNumber(rawRow.saldo, { allowNull: true })
+            
+            // Create transaction
+            transactions.push({
+              accountNumber: currentAccountNumber,
+              accountName: currentAccountName,
+              date,
+              text: rawRow.text || '',
+              info: rawRow.transaktionsinfo || '',
+              debit,
+              credit,
+              balanceAfter,
+            })
+          }
+          
+          resolve(transactions)
+        } catch (error) {
+          reject(error)
+        }
+      },
+      error: (error) => {
+        reject(new Error(`Failed to parse CSV: ${error.message}`))
+      },
+    })
+  })
+}
+
+/**
  * Parses a huvudbok CSV file and returns an array of transactions
  */
 export async function parseHuvudbokCsv(file: File): Promise<Transaction[]> {

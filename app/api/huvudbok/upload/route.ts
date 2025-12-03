@@ -1,13 +1,22 @@
-import { createServerSupabase } from '@/lib/supabase'
+import { createServerSupabase, createAdminSupabase } from '@/lib/supabase/server'
 import { requireAdministrator } from '@/lib/auth/requireAdministrator'
 import { NextRequest, NextResponse } from 'next/server'
-import { parseHuvudbokCsv } from '@/lib/huvudbok/parseHuvudbokCsv'
+import { parseHuvudbokCsvFromText } from '@/lib/huvudbok/parseHuvudbokCsv'
 import { calculateKpis, buildMonthlySummaries } from '@/lib/huvudbok/kpiHelpers'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAdministrator()
     const supabase = await createServerSupabase()
+    
+    // Verify user is authenticated
+    if (!user || !user.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+    
     const formData = await request.formData()
     
     const file = formData.get('file') as File
@@ -24,13 +33,14 @@ export async function POST(request: NextRequest) {
     // Get workspace_id from customer if not provided
     let finalWorkspaceId = workspaceId
     if (!finalWorkspaceId) {
-      const { data: customer } = await supabase
+      const { data: customer, error: customerError } = await supabase
         .from('customers')
         .select('workspace_id')
         .eq('id', customerId)
         .single()
       
-      if (!customer) {
+      if (customerError || !customer) {
+        console.error('Error fetching customer:', customerError)
         return NextResponse.json(
           { error: 'Customer not found' },
           { status: 404 }
@@ -39,8 +49,44 @@ export async function POST(request: NextRequest) {
       finalWorkspaceId = customer.workspace_id
     }
 
-    // Parse the CSV file
-    const transactions = await parseHuvudbokCsv(file)
+    // Verify user has access to this workspace
+    const { data: workspaceMember, error: memberError } = await supabase
+      .from('workspace_members')
+      .select('id')
+      .eq('workspace_id', finalWorkspaceId)
+      .eq('user_id', user.id)
+      .single()
+
+    const { data: workspaceOwner, error: ownerError } = await supabase
+      .from('workspaces')
+      .select('id')
+      .eq('id', finalWorkspaceId)
+      .eq('owner_id', user.id)
+      .single()
+
+    if (!workspaceMember && !workspaceOwner) {
+      console.error('User does not have access to workspace:', {
+        user_id: user.id,
+        workspace_id: finalWorkspaceId,
+        memberError,
+        ownerError,
+      })
+      return NextResponse.json(
+        { error: 'You do not have access to this workspace' },
+        { status: 403 }
+      )
+    }
+
+    // Use admin client for inserts to bypass RLS (we've already verified permissions above)
+    const adminSupabase = createAdminSupabase()
+
+    // Read file content as text for server-side parsing
+    const fileText = await file.text()
+    
+    // Create a File-like object or use the text directly
+    // For server-side, we'll need to parse the text directly
+    // Let's create a helper that can parse from text
+    const transactions = await parseHuvudbokCsvFromText(fileText, file.name)
 
     if (transactions.length === 0) {
       return NextResponse.json(
@@ -63,7 +109,7 @@ export async function POST(request: NextRequest) {
     const fileName = `huvudbok-${customerId}-${Date.now()}.${fileExt}`
     const filePath = fileName
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await adminSupabase.storage
       .from('source-documents')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -74,8 +120,8 @@ export async function POST(request: NextRequest) {
       throw uploadError
     }
 
-    // Create source_document record
-    const { data: sourceDocument, error: sourceDocError } = await supabase
+    // Create source_document record using admin client (bypasses RLS)
+    const { data: sourceDocument, error: sourceDocError } = await adminSupabase
       .from('source_documents')
       .insert({
         workspace_id: finalWorkspaceId,
@@ -93,7 +139,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (sourceDocError) {
-      throw sourceDocError
+      console.error('Error inserting source_document:', {
+        error: sourceDocError,
+        workspace_id: finalWorkspaceId,
+        customer_id: customerId,
+        user_id: user.id,
+      })
+      throw new Error(`Failed to create source document: ${sourceDocError.message}`)
     }
 
     // Prepare report content with transactions, KPIs, and summaries
@@ -125,7 +177,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if there's an existing report for this customer and update it, or create new
-    const { data: existingReport } = await supabase
+    const { data: existingReport } = await adminSupabase
       .from('reports')
       .select('id')
       .eq('customer_id', customerId)
@@ -136,7 +188,7 @@ export async function POST(request: NextRequest) {
     let report
     if (existingReport) {
       // Update existing report
-      const { data: updatedReport, error: updateError } = await supabase
+      const { data: updatedReport, error: updateError } = await adminSupabase
         .from('reports')
         .update({
           status: 'generated',
@@ -150,12 +202,17 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (updateError) {
-        throw updateError
+        console.error('Error updating report:', {
+          error: updateError,
+          report_id: existingReport.id,
+          customer_id: customerId,
+        })
+        throw new Error(`Failed to update report: ${updateError.message}`)
       }
       report = updatedReport
 
       // Update the report_source_documents link
-      await supabase
+      const { error: linkError } = await adminSupabase
         .from('report_source_documents')
         .upsert({
           report_id: report.id,
@@ -164,9 +221,18 @@ export async function POST(request: NextRequest) {
         }, {
           onConflict: 'report_id,source_document_id',
         })
+
+      if (linkError) {
+        console.error('Error linking report to source document:', {
+          error: linkError,
+          report_id: report.id,
+          source_document_id: sourceDocument.id,
+        })
+        throw new Error(`Failed to link report to source document: ${linkError.message}`)
+      }
     } else {
       // Create new report
-      const { data: newReport, error: reportError } = await supabase
+      const { data: newReport, error: reportError } = await adminSupabase
         .from('reports')
         .insert({
           customer_id: customerId,
@@ -179,18 +245,31 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (reportError) {
-        throw reportError
+        console.error('Error inserting report:', {
+          error: reportError,
+          customer_id: customerId,
+        })
+        throw new Error(`Failed to create report: ${reportError.message}`)
       }
       report = newReport
 
       // Link source document to report
-      await supabase
+      const { error: linkError } = await adminSupabase
         .from('report_source_documents')
         .insert({
           report_id: report.id,
           source_document_id: sourceDocument.id,
           relation_type: 'primary',
         })
+
+      if (linkError) {
+        console.error('Error linking report to source document:', {
+          error: linkError,
+          report_id: report.id,
+          source_document_id: sourceDocument.id,
+        })
+        throw new Error(`Failed to link report to source document: ${linkError.message}`)
+      }
     }
 
     return NextResponse.json({ 

@@ -17,6 +17,7 @@ export async function PUT(
     const contactEmail = formData.get('contact_email') as string | null
     const notes = formData.get('notes') as string | null
     const logoFile = formData.get('logo') as File | null
+    const logoUrlParam = formData.get('logo_url') as string | null
     const removeLogo = formData.get('remove_logo') === 'true'
 
     if (!name) {
@@ -76,7 +77,11 @@ export async function PUT(
     if (removeLogo) {
       logoUrl = null
     }
-    // Upload new logo if provided
+    // Use provided logo URL (e.g., from Brandfetch) if available
+    else if (logoUrlParam) {
+      logoUrl = logoUrlParam
+    }
+    // Upload new logo file if provided
     else if (logoFile && logoFile.size > 0) {
       const fileExt = logoFile.name.split('.').pop()
       const fileName = `${customerId}-${Date.now()}.${fileExt}`
