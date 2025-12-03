@@ -11,7 +11,7 @@ import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { useAddCustomerModal } from '@/components/admin/AddCustomerModalContext'
 import { InviteAdministratorButton } from '@/components/admin/InviteAdministratorButton'
 import { UploadCustomerListModal } from '@/components/admin/UploadCustomerListModal'
-import { MdOutlineUpload } from 'react-icons/md'
+import { MdOutlineUpload, MdOutlineCheckCircle, MdOutlineErrorOutline } from 'react-icons/md'
 
 interface Customer {
   id: string
@@ -48,9 +48,10 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
     defaultLabel: customer.org_number || '-',
     tag1Label: customer.hasSourceDocument ? 'Uppladdad' : 'Ej uppladdad',
     tag1Variant: customer.hasSourceDocument ? ('prominent' as const) : ('default' as const),
-    tag1Icon: customer.hasSourceDocument ? <MdOutlineUpload style={{ width: '16px', height: '16px' }} /> : undefined,
+    tag1Icon: customer.hasSourceDocument ? <MdOutlineUpload style={{ width: '14px', height: '14px' }} /> : <MdOutlineErrorOutline style={{ width: '14px', height: '14px' }} />,
     tag2Label: customer.hasPublishedReport ? 'Publicerad' : 'Ej publicerad',
     tag2Variant: customer.hasPublishedReport ? ('positive' as const) : ('default' as const),
+    tag2Icon: customer.hasPublishedReport ? <MdOutlineCheckCircle style={{ width: '14px', height: '14px' }} /> : <MdOutlineErrorOutline style={{ width: '14px', height: '14px' }} />,
     actionLabel: 'Visa kund',
     onActionClick: () => router.push(`/customers/${customer.id}`),
   }))
@@ -103,7 +104,7 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
             className="flex-1"
           />
           <QuickAction
-            illustrationType="card"
+            illustrationType="kit"
             label="Bjud in administratör"
             onClick={() => setShowInviteAdminModal(true)}
             className="flex-1"

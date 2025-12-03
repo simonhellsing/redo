@@ -28,6 +28,7 @@ export function KPI({
         'bg-[var(--neutral-0)] border border-[var(--neutral-200)]',
         'flex flex-col gap-[20px] items-start',
         'px-[20px] py-[16px] rounded-[8px]',
+        'shadow-sm',
         className
       )}
       {...props}

@@ -3,9 +3,10 @@
 import React from 'react'
 import { Card } from '@/components/ui/Card'
 import { Text } from '@/components/ui/Text'
+import { KPI } from '@/components/ui/KPI'
 import { Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
 import { calculateKpis, buildMonthlySummaries } from '@/lib/huvudbok/kpiHelpers'
-import { formatCurrencySEK, formatNumberSEK } from '@/lib/huvudbok/formatCurrency'
+import { formatCurrencySEK, formatNumberSEK, formatMillionSEK } from '@/lib/huvudbok/formatCurrency'
 import {
   LineChart,
   Line,
@@ -71,99 +72,38 @@ export function CustomerLedgerReport({
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-[32px] w-full">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card padding="lg">
-          <div className="flex flex-col gap-2">
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              Totala intäkter
-            </Text>
-            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
-              {formatCurrencySEK(kpis.revenue)}
-            </Text>
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              För perioden i huvudboken
-            </Text>
-          </div>
-        </Card>
+        <KPI
+          label="Totala intäkter"
+          value={formatMillionSEK(kpis.revenue)}
+        />
 
-        <Card padding="lg">
-          <div className="flex flex-col gap-2">
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              Totala kostnader
-            </Text>
-            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
-              {formatCurrencySEK(kpis.expenses)}
-            </Text>
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              För perioden i huvudboken
-            </Text>
-          </div>
-        </Card>
+        <KPI
+          label="Totala kostnader"
+          value={formatMillionSEK(kpis.expenses)}
+        />
 
-        <Card padding="lg">
-          <div className="flex flex-col gap-2">
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              Nettoresultat
-            </Text>
-            <Text
-              variant="headline-medium"
-              className={
-                kpis.netProfit >= 0
-                  ? 'text-[var(--positive-500)]'
-                  : 'text-[var(--negative-500)]'
-              }
-            >
-              {formatCurrencySEK(kpis.netProfit)}
-            </Text>
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              För perioden i huvudboken
-            </Text>
-          </div>
-        </Card>
+        <KPI
+          label="Nettoresultat"
+          value={formatMillionSEK(kpis.netProfit)}
+        />
 
-        <Card padding="lg">
-          <div className="flex flex-col gap-2">
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              Kassa vid periodens slut
-            </Text>
-            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
-              {formatCurrencySEK(kpis.cashEnd)}
-            </Text>
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              För perioden i huvudboken
-            </Text>
-          </div>
-        </Card>
+        <KPI
+          label="Kassa vid periodens slut"
+          value={formatMillionSEK(kpis.cashEnd)}
+        />
 
-        <Card padding="lg">
-          <div className="flex flex-col gap-2">
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              Kundfordringar (1510)
-            </Text>
-            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
-              {formatCurrencySEK(kpis.accountsReceivable)}
-            </Text>
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              För perioden i huvudboken
-            </Text>
-          </div>
-        </Card>
+        <KPI
+          label="Kundfordringar (1510)"
+          value={formatMillionSEK(kpis.accountsReceivable)}
+        />
 
-        <Card padding="lg">
-          <div className="flex flex-col gap-2">
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              Leverantörsskulder (2440)
-            </Text>
-            <Text variant="headline-medium" className="text-[var(--neutral-900)]">
-              {formatCurrencySEK(kpis.accountsPayable)}
-            </Text>
-            <Text variant="label-small" className="text-[var(--neutral-500)]">
-              För perioden i huvudboken
-            </Text>
-          </div>
-        </Card>
+        <KPI
+          label="Leverantörsskulder (2440)"
+          value={formatMillionSEK(kpis.accountsPayable)}
+        />
       </div>
 
       {/* Charts */}

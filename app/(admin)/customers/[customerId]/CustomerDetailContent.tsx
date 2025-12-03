@@ -16,8 +16,9 @@ import { PublishReportModal } from '@/components/admin/PublishReportModal'
 import { useAddCustomerModal } from '@/components/admin/AddCustomerModalContext'
 import { IconButton } from '@/components/ui/IconButton'
 import { Menu, MenuItem } from '@/components/ui/Menu'
+import { Tag } from '@/components/ui/Tag'
 import { parseHuvudbokCsv, Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
-import { MdOutlineUpload, MdOutlinePublish, MdOutlineMoreHoriz } from 'react-icons/md'
+import { MdOutlineUpload, MdOutlinePublish, MdOutlineMoreHoriz, MdOutlineCheckCircle, MdOutlineCalendarToday, MdOutlineInfo, MdOutlineErrorOutline } from 'react-icons/md'
 import type { Customer } from '@/lib/types/customer'
 
 interface SourceDocument {
@@ -238,6 +239,7 @@ export function CustomerDetailContent({
   const hasSourceDocuments = sourceDocuments.length > 0
   const hasTransactions = transactions && transactions.length > 0
   const canPublish = hasSourceDocuments && latestReport && latestReport.status === 'generated'
+  const isPublishDisabled = !latestReport || latestReport.status === 'published'
 
   async function handlePublish() {
     if (!latestReport) return
@@ -280,11 +282,6 @@ export function CustomerDetailContent({
     }).format(date)
   }
 
-  // Determine status text
-  const statusText = uploadedAt
-    ? `Uppladdad (${formatUploadDate(uploadedAt)})`
-    : 'Ej uppladdad'
-
   return (
     <div className="flex flex-col gap-[8px] w-full">
       {/* PageHeader */}
@@ -292,26 +289,14 @@ export function CustomerDetailContent({
         logo={customerLogo}
         title={customer.name}
         subtitle={
-          <div className="flex items-center gap-2">
-            {customer.org_number && (
-              <Text
-                variant="label-small"
-                className="text-[var(--neutral-500)] whitespace-nowrap"
-              >
-                {customer.org_number}
-              </Text>
-            )}
+          customer.org_number ? (
             <Text
               variant="label-small"
-              className={
-                uploadedAt
-                  ? 'text-[var(--positive-500)] whitespace-nowrap'
-                  : 'text-[var(--neutral-500)] whitespace-nowrap'
-              }
+              className="text-[var(--neutral-500)] whitespace-nowrap"
             >
-              {statusText}
+              {customer.org_number}
             </Text>
-          </div>
+          ) : undefined
         }
         actions={
           <>
@@ -351,16 +336,15 @@ export function CustomerDetailContent({
             >
               {isParsing ? 'Laddar...' : hasSourceDocuments ? 'Uppdatera huvudbok' : 'Ladda upp huvudbok'}
             </Button>
-            {canPublish && (
-              <Button
-                variant="primary"
-                size="small"
-                leftIcon={<MdOutlinePublish />}
-                onClick={() => setShowPublishModal(true)}
-              >
-                Publicera
-              </Button>
-            )}
+            <Button
+              variant="primary"
+              size="small"
+              leftIcon={<MdOutlinePublish />}
+              onClick={() => setShowPublishModal(true)}
+              disabled={isPublishDisabled || isPublishing}
+            >
+              Publicera
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
@@ -412,7 +396,39 @@ export function CustomerDetailContent({
           </div>
         ) : hasTransactions ? (
           // Report View
-          <div className="w-full">
+          <div className="w-full flex flex-col gap-[32px]">
+            {/* Status Tags */}
+            <div className="flex items-center gap-2">
+              {uploadedAt ? (
+                <Tag
+                  variant="prominent"
+                  icon={<MdOutlineUpload style={{ width: '14px', height: '14px' }} />}
+                >
+                  Uppladdad {formatUploadDate(uploadedAt)}
+                </Tag>
+              ) : (
+                <Tag
+                  variant="default"
+                  icon={<MdOutlineErrorOutline style={{ width: '14px', height: '14px' }} />}
+                >
+                  Ej uppladdad
+                </Tag>
+              )}
+              {latestReport && (
+                <Tag
+                  variant={latestReport.status === 'published' ? 'positive' : 'default'}
+                  icon={
+                    latestReport.status === 'published' ? (
+                      <MdOutlineCheckCircle style={{ width: '14px', height: '14px' }} />
+                    ) : (
+                      <MdOutlineErrorOutline style={{ width: '14px', height: '14px' }} />
+                    )
+                  }
+                >
+                  {latestReport.status === 'published' ? 'Publicerad' : 'Ej publicerad'}
+                </Tag>
+              )}
+            </div>
             <CustomerLedgerReport transactions={transactions} />
           </div>
         ) : (
