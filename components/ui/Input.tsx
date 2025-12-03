@@ -76,7 +76,7 @@ export function Input({
   return (
     <div
       className={cn(
-        'group flex items-center transition-colors',
+        'group flex items-center transition-colors w-full',
         disabled && 'cursor-not-allowed opacity-60',
         className
       )}
@@ -109,9 +109,11 @@ export function Input({
       <input
         type={props.type || 'text'}
         className={cn(
-          'flex-1 bg-transparent border-0 outline-0 transition-colors',
+          'flex-1 bg-transparent border-0 outline-0 transition-colors w-full min-w-0',
           'placeholder:text-[var(--neutral-400)]',
-          'text-body-small'
+          'text-body-small',
+          // Add class to hide native calendar icon when we have a custom rightIcon
+          props.type === 'date' && rightIcon && 'hide-native-calendar-icon'
         )}
         style={{
           color: currentTextColor,

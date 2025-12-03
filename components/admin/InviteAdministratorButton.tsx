@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
-import { ModalFormField } from '@/components/ui/Modal'
+import { Label } from '@/components/ui/Label'
 import { Text } from '@/components/ui/Text'
 
 interface InviteAdministratorButtonProps {
@@ -50,60 +49,73 @@ export function InviteAdministratorButton({ onClose }: InviteAdministratorButton
     }
   }
 
+  const handleClose = () => {
+    setIsOpen(false)
+    setEmail('')
+    setError(null)
+    setSuccess(null)
+    onClose?.()
+  }
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Modal
-            title="Bjud in administratör"
-            onClose={() => {
-              setIsOpen(false)
-              setEmail('')
-              setError(null)
-              setSuccess(null)
-              onClose?.()
-            }}
-            onCancel={() => {
-              setIsOpen(false)
-              setEmail('')
-              setError(null)
-              setSuccess(null)
-              onClose?.()
-            }}
-            onConfirm={handleInvite}
-            confirmLabel="Skicka inbjudan"
-            confirmDisabled={isLoading || !email}
-            cancelLabel="Avbryt"
-          >
-            <div className="flex flex-col gap-[16px] w-full">
-              <Text variant="body-medium" className="text-[var(--neutral-700)]">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-end p-[8px]"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.12)',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClose()
+        }
+      }}
+    >
+      <div onClick={(e) => e.stopPropagation()} className="h-full">
+        <Modal
+          title="Bjud in administratör"
+          onClose={handleClose}
+          onCancel={handleClose}
+          onConfirm={handleInvite}
+          confirmLabel="Skicka inbjudan"
+          confirmDisabled={isLoading || !email}
+          cancelLabel="Avbryt"
+        >
+          <div className="flex flex-col gap-[32px] items-center w-full px-[20px] py-[40px]">
+            <div className="flex flex-col gap-[20px] items-start w-full max-w-[360px]">
+              <Text variant="body-small" style={{ color: 'var(--neutral-600)' }}>
                 Skicka en inbjudan till en ny administratör. De kommer att få ett e-postmeddelande med en länk för att skapa ett konto och få tillgång till administrationsgränssnittet.
               </Text>
 
-              <ModalFormField label="E-postadress">
+              <div className="flex flex-col gap-[8px] items-start w-full">
+                <Label htmlFor="email">E-postadress</Label>
                 <Input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@example.com"
                   disabled={isLoading}
+                  inputSize="medium"
                 />
-              </ModalFormField>
+              </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm w-full">
                   {error}
                 </div>
               )}
 
               {success && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm w-full">
                   {success}
                 </div>
               )}
             </div>
-          </Modal>
-        </div>
+          </div>
+        </Modal>
+      </div>
+    </div>
   )
 }
 

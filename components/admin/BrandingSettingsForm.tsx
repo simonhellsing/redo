@@ -107,7 +107,7 @@ export function BrandingSettingsForm({ workspace }: BrandingSettingsFormProps) {
             placeholder="Mitt redovisningsföretag"
             required
             disabled={isSubmitting}
-            size="large"
+            inputSize="large"
             className="w-full"
           />
         </div>
@@ -129,7 +129,7 @@ export function BrandingSettingsForm({ workspace }: BrandingSettingsFormProps) {
             onChange={(e) => setPrimaryColor(e.target.value)}
             placeholder="#3b82f6"
             disabled={isSubmitting}
-            size="large"
+            inputSize="large"
             className="w-full"
           />
         </div>

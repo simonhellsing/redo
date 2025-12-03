@@ -215,4 +215,23 @@ body {
     line-height: 16px !important;
     letter-spacing: 0 !important;
   }
+  
+  /* Hide native calendar picker icon for date inputs with custom rightIcon */
+  input[type="date"].hide-native-calendar-icon::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: -9999px;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+  }
+  
+  input[type="date"].hide-native-calendar-icon::-moz-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: -9999px;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+  }
 }
