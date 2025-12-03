@@ -42,13 +42,15 @@ export function Modal({
       )}
       style={{
         width: '400px',
-        height: '100%',
+        maxHeight: 'calc(100vh - 16px)',
+        display: 'flex',
+        flexDirection: 'column',
       }}
       {...props}
     >
       <ModalHeader title={title} onClose={onClose} />
       
-      <div className="flex flex-col gap-[20px] px-[20px] py-[40px] w-full flex-1 overflow-y-auto">
+      <div className="flex flex-col gap-[20px] px-[20px] py-[40px] w-full flex-1 min-h-0 overflow-y-auto">
         {children}
       </div>
       

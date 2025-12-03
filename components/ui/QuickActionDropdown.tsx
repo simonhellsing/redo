@@ -69,11 +69,11 @@ export function QuickActionDropdown({
   }
 
   return (
-    <>
+    <div className="relative">
       <div
         ref={containerRef}
         className={cn(
-          'flex flex-col items-start justify-between h-[120px] p-[20px] rounded-[12px] relative',
+          'flex flex-col items-start justify-between h-[120px] p-[20px] rounded-[12px]',
           'cursor-pointer transition-colors',
           'shadow-[0_2px_8px_rgba(0,0,0,0.08)]',
           backgroundClass,
@@ -108,8 +108,9 @@ export function QuickActionDropdown({
           ref={menuRef}
           className="absolute z-50 mt-[4px]"
           style={{
-            left: containerRef.current?.offsetLeft || 0,
-            top: (containerRef.current?.offsetTop || 0) + (containerRef.current?.offsetHeight || 0) + 4,
+            left: 0,
+            top: '100%',
+            width: containerRef.current?.offsetWidth || 'auto',
           }}
         >
           <Menu>
@@ -124,7 +125,7 @@ export function QuickActionDropdown({
           </Menu>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

@@ -54,6 +54,7 @@ export default async function DashboardPage() {
     <DashboardContent
       userName={user?.profile?.name || user?.email?.split('@')[0] || 'User'}
       customers={customersWithReports}
+      workspaceId={workspace.id}
     />
   )
 }

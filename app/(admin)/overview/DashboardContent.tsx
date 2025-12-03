@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Text } from '@/components/ui/Text'
+import { QuickAction } from '@/components/ui/QuickAction'
 import { QuickActionDropdown } from '@/components/ui/QuickActionDropdown'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Table } from '@/components/ui/Table'
@@ -32,6 +33,7 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
   const { openModal } = useAddCustomerModal()
   const [showInviteAdminModal, setShowInviteAdminModal] = useState(false)
   const [showUploadCustomerListModal, setShowUploadCustomerListModal] = useState(false)
+  const uploadFileInputRef = useRef<HTMLInputElement>(null)
 
   const tableColumns = [
     { label: 'Namn', width: '300px' },
@@ -80,7 +82,10 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
                 },
                 {
                   label: 'Ladda upp kundlista',
-                  onClick: () => setShowUploadCustomerListModal(true),
+                  onClick: () => {
+                    // Open file picker immediately
+                    uploadFileInputRef.current?.click()
+                  },
                 },
               ]}
             />
@@ -106,6 +111,35 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
         </div>
         {showInviteAdminModal && (
           <InviteAdministratorButton onClose={() => setShowInviteAdminModal(false)} />
+        )}
+        <input
+          ref={uploadFileInputRef}
+          type="file"
+          accept=".csv"
+          style={{ display: 'none' }}
+          aria-hidden="true"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) {
+              setShowUploadCustomerListModal(true)
+            }
+          }}
+        />
+        {showUploadCustomerListModal && (
+          <UploadCustomerListModal
+            isOpen={showUploadCustomerListModal}
+            onClose={() => {
+              setShowUploadCustomerListModal(false)
+              if (uploadFileInputRef.current) {
+                uploadFileInputRef.current.value = ''
+              }
+            }}
+            workspaceId={workspaceId}
+            onSuccess={() => {
+              router.refresh()
+            }}
+            initialFile={uploadFileInputRef.current?.files?.[0] || null}
+          />
         )}
       </div>
 

@@ -1,6 +1,120 @@
 import { requireAdministrator } from '@/lib/auth/requireAdministrator'
 import { NextRequest, NextResponse } from 'next/server'
 
+async function fetchLogoForCompany(companyName: string, retries = 2): Promise<string | null> {
+  const clientId = process.env.BRANDFETCH_CLIENT_ID
+  if (!clientId) {
+    console.warn('BRANDFETCH_CLIENT_ID not configured')
+    return null
+  }
+
+  // Clean company name - remove common suffixes and extra whitespace
+  const cleanName = companyName.trim().replace(/\s+/g, ' ')
+  
+  if (!cleanName) {
+    return null
+  }
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (attempt > 0) {
+        // Add delay between retries
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+      }
+
+      // Create abort controller for timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+      const searchResponse = await fetch(
+        `https://api.brandfetch.io/v2/search/${encodeURIComponent(cleanName)}?c=${clientId}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+          },
+          signal: controller.signal,
+        }
+      )
+
+      clearTimeout(timeoutId)
+
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text().catch(() => 'Unknown error')
+        console.warn(`Brandfetch API error for "${cleanName}": ${searchResponse.status} - ${errorText}`)
+        
+        // If rate limited, wait longer before retry
+        if (searchResponse.status === 429 && attempt < retries) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)))
+          continue
+        }
+        
+        return null
+      }
+
+      const searchData = await searchResponse.json()
+
+      if (!searchData || !Array.isArray(searchData) || searchData.length === 0) {
+        console.log(`No results found for "${cleanName}"`)
+        return null
+      }
+
+      const firstResult = searchData[0]
+      const domain = firstResult?.domain
+
+      if (!domain) {
+        console.log(`No domain found for "${cleanName}"`)
+        return null
+      }
+
+      // Construct the logo URL (Brandfetch requires hotlinking)
+      const logoUrl = `https://cdn.brandfetch.io/${domain}?c=${clientId}`
+      console.log(`Successfully fetched logo for "${cleanName}": ${logoUrl}`)
+      return logoUrl
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn(`Request timeout for "${cleanName}"`)
+      } else {
+        console.error(`Error fetching logo for "${cleanName}" (attempt ${attempt + 1}/${retries + 1}):`, error.message || error)
+      }
+      
+      // If this was the last attempt, return null
+      if (attempt === retries) {
+        return null
+      }
+    }
+  }
+
+  return null
+}
+
+// Helper function to batch requests with delay - process sequentially with delays
+async function fetchLogosInBatches(
+  customers: ParsedCustomer[],
+  delayBetweenRequests = 1000 // 1 second between each request
+): Promise<ParsedCustomer[]> {
+  const results: ParsedCustomer[] = []
+  
+  console.log(`Fetching logos for ${customers.length} customers sequentially with ${delayBetweenRequests}ms delay`)
+  
+  for (let i = 0; i < customers.length; i++) {
+    const customer = customers[i]
+    console.log(`Fetching logo ${i + 1}/${customers.length} for "${customer.company_name}"`)
+    
+    const logoUrl = await fetchLogoForCompany(customer.company_name)
+    results.push({
+      ...customer,
+      logo_url: logoUrl,
+    })
+    
+    // Add delay between requests (except for the last one)
+    if (i < customers.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, delayBetweenRequests))
+    }
+  }
+  
+  return results
+}
+
 interface ParsedCustomer {
   company_name: string
   orgnr: string | null
@@ -17,6 +131,38 @@ interface ParsedCustomer {
   status: 'Aktiv' | 'Passiv'
 }
 
+function parseCSVLine(line: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Escaped quote
+        current += '"'
+        i++
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes
+      }
+    } else if (char === ',' && !inQuotes) {
+      // End of field
+      result.push(current.trim())
+      current = ''
+    } else {
+      current += char
+    }
+  }
+  
+  // Add last field
+  result.push(current.trim())
+  
+  return result
+}
+
 function parseCSV(csvText: string): ParsedCustomer[] {
   const lines = csvText.split('\n').filter(line => line.trim())
   if (lines.length < 2) {
@@ -24,7 +170,7 @@ function parseCSV(csvText: string): ParsedCustomer[] {
   }
 
   // Parse header row
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
+  const headers = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, ''))
   
   // Map header names to our field names (case-insensitive, Swedish/English)
   const headerMap: Record<string, string> = {}
@@ -65,7 +211,7 @@ function parseCSV(csvText: string): ParsedCustomer[] {
   // Parse data rows
   const customers: ParsedCustomer[] = []
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
+    const values = parseCSVLine(lines[i]).map(v => v.replace(/^"|"$/g, ''))
     
     if (values.length === 0 || values.every(v => !v)) {
       continue // Skip empty rows
@@ -139,6 +285,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log(`Parsed ${customers.length} customers from CSV`)
+
+    // Return customers without logos - logos will be fetched progressively on the frontend
+    // This allows for better UX with loading states and avoids backend timeout issues
     return NextResponse.json({ customers })
   } catch (error: any) {
     console.error('Error parsing CSV:', error)
