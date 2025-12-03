@@ -7,7 +7,7 @@ import { Text } from './Text'
 type ButtonVariant = 'primary' | 'secondary' | 'navigation' | 'tertiary' | 'outline' | 'ghost'
 type ButtonSize = 'small' | 'medium' | 'large' | 'sm' | 'md' | 'lg'
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   leftIcon?: React.ReactNode

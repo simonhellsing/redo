@@ -13,26 +13,6 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   rightIcon?: React.ReactNode
 }
 
-const sizeStyles: Record<InputSize, {
-  height: string
-  padding: string
-  textVariant: 'body-small' | 'body-medium'
-  borderRadius: string
-}> = {
-  medium: {
-    height: '32px',
-    padding: '10px 16px',
-    textVariant: 'body-small',
-    borderRadius: '6px',
-  },
-  large: {
-    height: '40px',
-    padding: '12px 16px',
-    textVariant: 'body-small',
-    borderRadius: '6px',
-  },
-}
-
 export function Input({
   className,
   variant = 'primary',
@@ -42,58 +22,101 @@ export function Input({
   disabled,
   ...props
 }: InputProps) {
-  const sizeStyle = sizeStyles[size] || sizeStyles['large']
-
-  const baseClasses = 'group flex items-center gap-[12px] transition-colors focus:outline-none'
+  const hasIcons = leftIcon || rightIcon
+  const gap = hasIcons ? '8px' : '12px'
   
-  const getVariantClasses = () => {
-    switch (variant) {
-      case 'primary':
-        return 'bg-[var(--neutral-0)] border border-[var(--neutral-300)] hover:border-[var(--neutral-400)] focus:border-[var(--neutral-400)]'
-      case 'secondary':
-        return 'bg-[var(--neutral-100)] border border-[var(--neutral-200)] hover:border-[var(--neutral-400)] focus:border-[var(--neutral-400)]'
-      default:
-        return ''
-    }
-  }
-
-  const getTextColor = () => {
-    return 'var(--neutral-600)'
-  }
-
-  const getTextColorHover = () => {
-    return 'var(--neutral-800)'
-  }
-
-  const iconColor = disabled 
-    ? 'var(--neutral-400)'
-    : getTextColor()
-
-  const iconColorHover = getTextColorHover()
+  // Size-specific styles
+  const isMedium = size === 'medium'
+  const height = isMedium ? '32px' : undefined
+  const paddingY = isMedium ? '10px' : '12px'
+  const paddingX = hasIcons ? '12px' : '16px'
+  
+  // Variant styles
+  const bgColor = variant === 'primary' 
+    ? 'var(--neutral-0)' 
+    : 'var(--neutral-100)'
+  
+  const borderColorDefault = variant === 'primary'
+    ? 'var(--neutral-300)'
+    : 'var(--neutral-200)'
+  
+  const borderColorHover = 'var(--neutral-400)'
+  const borderColorActive = 'var(--neutral-400)'
+  
+  // Text colors
+  const textColorDefault = 'var(--neutral-600)'
+  const textColorHover = 'var(--neutral-800)'
+  const textColorActive = 'var(--neutral-800)'
+  const textColorDisabled = 'var(--neutral-400)'
+  
+  // Icon colors
+  const iconColorDefault = disabled ? textColorDisabled : textColorDefault
+  const iconColorHover = textColorHover
+  const iconColorActive = textColorActive
 
   return (
     <div
       className={cn(
-        baseClasses,
-        getVariantClasses(),
+        'group flex items-center transition-colors focus-within:outline-none',
         disabled && 'cursor-not-allowed opacity-60',
         className
       )}
       style={{
-        height: sizeStyle.height,
-        padding: leftIcon || rightIcon ? `${size === 'large' ? '12px' : '10px'} ${leftIcon && rightIcon ? '16px' : '12px'} ${size === 'large' ? '12px' : '10px'} ${leftIcon ? '12px' : '16px'}` : sizeStyle.padding,
-        borderRadius: sizeStyle.borderRadius,
-        '--input-text-color': disabled ? 'var(--neutral-400)' : getTextColor(),
-        '--input-text-color-hover': getTextColorHover(),
-      } as React.CSSProperties & { '--input-text-color': string; '--input-text-color-hover': string }}
+        height,
+        paddingTop: paddingY,
+        paddingBottom: paddingY,
+        paddingLeft: leftIcon ? paddingX : paddingX,
+        paddingRight: rightIcon ? paddingX : paddingX,
+        gap,
+        backgroundColor: bgColor,
+        border: `1px solid ${borderColorDefault}`,
+        borderRadius: '6px',
+        '--input-text-color': disabled ? textColorDisabled : textColorDefault,
+        '--input-text-color-hover': textColorHover,
+        '--input-text-color-active': textColorActive,
+        '--input-border-color-hover': borderColorHover,
+        '--input-border-color-active': borderColorActive,
+        '--input-icon-color': iconColorDefault,
+        '--input-icon-color-hover': iconColorHover,
+        '--input-icon-color-active': iconColorActive,
+      } as React.CSSProperties & {
+        '--input-text-color': string
+        '--input-text-color-hover': string
+        '--input-text-color-active': string
+        '--input-border-color-hover': string
+        '--input-border-color-active': string
+        '--input-icon-color': string
+        '--input-icon-color-hover': string
+        '--input-icon-color-active': string
+      }}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.borderColor = 'var(--input-border-color-hover)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.borderColor = borderColorDefault
+        }
+      }}
+      onFocus={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.borderColor = 'var(--input-border-color-active)'
+        }
+      }}
+      onBlur={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.borderColor = borderColorDefault
+        }
+      }}
     >
       {leftIcon && (
         <span
-          className="flex items-center justify-center shrink-0 transition-colors group-hover:[color:var(--input-text-color-hover)]"
+          className="flex items-center justify-center shrink-0 transition-colors"
           style={{
             width: '16px',
             height: '16px',
-            color: iconColor,
+            color: 'var(--input-icon-color)',
           }}
         >
           {leftIcon}
@@ -104,22 +127,73 @@ export function Input({
         className={cn(
           'flex-1 bg-transparent border-0 outline-0 transition-colors',
           'placeholder:text-[var(--neutral-400)]',
-          'group-hover:[color:var(--input-text-color-hover)]',
-          sizeStyle.textVariant === 'body-small' ? 'text-body-small' : 'text-body-medium'
+          'text-body-small'
         )}
         style={{
           color: 'var(--input-text-color)',
+          fontFamily: 'var(--font-inter), sans-serif',
+          fontSize: '12px',
+          lineHeight: '16px',
+          letterSpacing: '0.25px',
         }}
         disabled={disabled}
+        onFocus={(e) => {
+          if (!disabled) {
+            e.target.style.color = 'var(--input-text-color-active)'
+            const container = e.target.closest('div')
+            if (container) {
+              container.style.borderColor = 'var(--input-border-color-active)'
+            }
+            // Update icon colors
+            const icons = container?.querySelectorAll('span')
+            icons?.forEach(icon => {
+              icon.style.color = 'var(--input-icon-color-active)'
+            })
+          }
+        }}
+        onBlur={(e) => {
+          if (!disabled) {
+            e.target.style.color = 'var(--input-text-color)'
+            const container = e.target.closest('div')
+            if (container) {
+              container.style.borderColor = borderColorDefault
+            }
+            // Reset icon colors
+            const icons = container?.querySelectorAll('span')
+            icons?.forEach(icon => {
+              icon.style.color = 'var(--input-icon-color)'
+            })
+          }
+        }}
+        onMouseEnter={(e) => {
+          if (!disabled && document.activeElement !== e.target) {
+            e.target.style.color = 'var(--input-text-color-hover)'
+            const container = e.target.closest('div')
+            const icons = container?.querySelectorAll('span')
+            icons?.forEach(icon => {
+              icon.style.color = 'var(--input-icon-color-hover)'
+            })
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!disabled && document.activeElement !== e.target) {
+            e.target.style.color = 'var(--input-text-color)'
+            const container = e.target.closest('div')
+            const icons = container?.querySelectorAll('span')
+            icons?.forEach(icon => {
+              icon.style.color = 'var(--input-icon-color)'
+            })
+          }
+        }}
         {...props}
       />
       {rightIcon && (
         <span
-          className="flex items-center justify-center shrink-0 transition-colors group-hover:[color:var(--input-text-color-hover)]"
+          className="flex items-center justify-center shrink-0 transition-colors"
           style={{
             width: '16px',
             height: '16px',
-            color: iconColor,
+            color: 'var(--input-icon-color)',
           }}
         >
           {rightIcon}
