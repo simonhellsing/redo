@@ -244,8 +244,8 @@ export async function parseHuvudbokCsvFromText(
           reject(error)
         }
       },
-      error: (error) => {
-        reject(new Error(`Failed to parse CSV: ${error.message}`))
+      error: (error: any) => {
+        reject(new Error(`Failed to parse CSV: ${error?.message || String(error)}`))
       },
     })
   })
@@ -363,8 +363,8 @@ export async function parseHuvudbokCsv(file: File): Promise<Transaction[]> {
           reject(error)
         }
       },
-      error: (error) => {
-        reject(new Error(`Failed to parse CSV: ${error.message}`))
+      error: (error: any) => {
+        reject(new Error(`Failed to parse CSV: ${error?.message || String(error)}`))
       },
     })
   })
