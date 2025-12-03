@@ -1,8 +1,10 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { CustomerForm } from './CustomerForm'
+import { UploadCustomerListModal } from './UploadCustomerListModal'
+import { Button } from '@/components/ui/Button'
 
 import type { Customer } from '@/lib/types/customer'
 
@@ -23,6 +25,7 @@ export function CustomerModal({
 }: CustomerModalProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
   const isEditing = !!customer
 
@@ -44,39 +47,75 @@ export function CustomerModal({
     onClose()
   }
 
+  const handleUploadListClick = () => {
+    setIsUploadModalOpen(true)
+  }
+
+  const handleUploadModalClose = () => {
+    setIsUploadModalOpen(false)
+  }
+
+  const handleUploadModalSuccess = () => {
+    setIsUploadModalOpen(false)
+    if (onSuccess) {
+      onSuccess()
+    }
+    onClose()
+  }
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-end p-[8px]"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.12)',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
-      }}
-    >
-      <div onClick={(e) => e.stopPropagation()} className="h-full">
-        <Modal
-          title={isEditing ? "Redigera kund" : "Lägg till ny kund"}
-          onClose={onClose}
-          onCancel={onClose}
-          cancelLabel="Avbryt"
-          confirmLabel={isEditing ? "Uppdatera kund" : "Lägg till kund"}
-          confirmDisabled={isSubmitting}
-          onConfirm={handleConfirm}
-        >
-          <CustomerForm
-            customer={customer || undefined}
-            workspaceId={workspaceId}
-            onSubmitSuccess={handleFormSubmitSuccess}
-            hideButtons={true}
-            formRef={formRef}
-            onSubmittingChange={setIsSubmitting}
-          />
-        </Modal>
+    <>
+      <div
+        className="fixed inset-0 z-50 flex items-start justify-end p-[8px]"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.12)',
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onClose()
+          }
+        }}
+      >
+        <div onClick={(e) => e.stopPropagation()} className="h-full">
+          <Modal
+            title={isEditing ? "Redigera kund" : "Lägg till ny kund"}
+            onClose={onClose}
+            onCancel={onClose}
+            cancelLabel="Avbryt"
+            confirmLabel={isEditing ? "Uppdatera kund" : "Lägg till kund"}
+            confirmDisabled={isSubmitting}
+            onConfirm={handleConfirm}
+            footerLeftContent={
+              !isEditing ? (
+                <Button
+                  variant="tertiary"
+                  size="small"
+                  onClick={handleUploadListClick}
+                  disabled={isSubmitting}
+                >
+                  Ladda upp kundlista
+                </Button>
+              ) : undefined
+            }
+          >
+            <CustomerForm
+              customer={customer || undefined}
+              workspaceId={workspaceId}
+              onSubmitSuccess={handleFormSubmitSuccess}
+              hideButtons={true}
+              formRef={formRef}
+              onSubmittingChange={setIsSubmitting}
+            />
+          </Modal>
+        </div>
       </div>
-    </div>
+      <UploadCustomerListModal
+        isOpen={isUploadModalOpen}
+        onClose={handleUploadModalClose}
+        workspaceId={workspaceId}
+        onSuccess={handleUploadModalSuccess}
+      />
+    </>
   )
 }
 

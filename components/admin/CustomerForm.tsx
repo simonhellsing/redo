@@ -9,7 +9,9 @@ import { Textarea } from '@/components/ui/Textarea'
 import { UploadButton } from '@/components/ui/UploadButton'
 import { IconButton } from '@/components/ui/IconButton'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
-import { MdOutlineDelete } from 'react-icons/md'
+import { Text } from '@/components/ui/Text'
+import { Divider } from '@/components/ui/Divider'
+import { MdOutlineDelete, MdOutlineArrowDropDown, MdOutlineCalendarToday } from 'react-icons/md'
 import type { Customer } from '@/lib/types/customer'
 
 interface CustomerFormProps {
@@ -239,214 +241,260 @@ export function CustomerForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col w-full">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
           {error}
         </div>
       )}
 
-      {/* Logo Upload Section */}
-      <div className="flex flex-col gap-[8px] items-center">
-        <div className="relative group">
-          <UploadButton
-            onClick={handleUploadClick}
-            disabled={isSubmitting}
-            backgroundImage={
-              logoPreview || 
-              (useFetchedLogo && fetchedLogoUrl ? fetchedLogoUrl : null) ||
-              (customer?.logo_url && !removeLogo ? customer.logo_url : null)
-            }
-          />
-          {/* Delete button overlay - shows on hover when logo exists */}
-          {(logoPreview || (useFetchedLogo && fetchedLogoUrl) || (customer?.logo_url && !removeLogo)) && (
-            <div className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 transition-opacity z-20">
-              <IconButton
-                icon={<MdOutlineDelete />}
-                variant="secondary"
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleDeleteLogo()
-                }}
+      <div className="flex flex-col gap-[32px] items-center w-full px-[20px] py-[40px]">
+        {/* First Section */}
+        <div className="flex flex-col gap-[20px] items-center w-full">
+          {/* Logo Upload */}
+          <div className="flex flex-col gap-[8px] items-center">
+            <div className="relative group">
+              <UploadButton
+                onClick={handleUploadClick}
                 disabled={isSubmitting}
-                aria-label="Delete logo"
+                backgroundImage={
+                  logoPreview || 
+                  (useFetchedLogo && fetchedLogoUrl ? fetchedLogoUrl : null) ||
+                  (customer?.logo_url && !removeLogo ? customer.logo_url : null)
+                }
+              />
+              {/* Delete button overlay - shows on hover when logo exists */}
+              {(logoPreview || (useFetchedLogo && fetchedLogoUrl) || (customer?.logo_url && !removeLogo)) && (
+                <div className="absolute top-[8px] right-[8px] opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                  <IconButton
+                    icon={<MdOutlineDelete />}
+                    variant="secondary"
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteLogo()
+                    }}
+                    disabled={isSubmitting}
+                    aria-label="Delete logo"
+                  />
+                </div>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="logo"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={isSubmitting}
+              style={{ display: 'none' }}
+              aria-hidden="true"
+            />
+            
+            {isFetchingLogo && !logoFile && (
+              <Text variant="body-small" style={{ color: 'var(--neutral-500)' }}>
+                Searching for logo...
+              </Text>
+            )}
+          </div>
+
+          {/* Företagsnamn */}
+          <div className="flex flex-col gap-[8px] items-start w-full max-w-[360px]">
+            <Label htmlFor="name">Företagsnamn</Label>
+            <Input 
+              id="name" 
+              name="name" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required 
+              disabled={isSubmitting}
+              inputSize="medium"
+            />
+          </div>
+
+          {/* Organisationsnummer + Bolagsform Row */}
+          <div className="flex gap-[12px] items-start w-full max-w-[360px]">
+            <div className="flex-1 flex flex-col gap-[8px] items-start min-w-0">
+              <Label htmlFor="orgnr" style={{ color: 'var(--neutral-600)' }}>
+                Organisationsnummer
+              </Label>
+              <Input 
+                id="orgnr" 
+                name="orgnr" 
+                value={orgnr}
+                onChange={(e) => setOrgnr(e.target.value)}
+                disabled={isSubmitting}
+                inputSize="medium"
               />
             </div>
-          )}
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          name="logo"
-          accept="image/*"
-          onChange={handleFileChange}
-          disabled={isSubmitting}
-          style={{ display: 'none' }}
-          aria-hidden="true"
-        />
-        
-        {isFetchingLogo && !logoFile && (
-          <p className="text-xs text-gray-500">Searching for logo...</p>
-        )}
-      </div>
+            <div className="flex flex-col gap-[8px] items-start w-[96px] shrink-0">
+              <Label htmlFor="bolagsform">Bolagsform</Label>
+              <div className="relative w-full">
+                <select
+                  id="bolagsform"
+                  name="bolagsform"
+                  value={bolagsform}
+                  onChange={(e) => setBolagsform(e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full appearance-none bg-[var(--neutral-0)] border border-[var(--neutral-300)] rounded-[6px] h-[32px] px-[12px] pr-[28px] py-[10px] text-[12px] text-[var(--neutral-600)] font-normal leading-[16px] tracking-[0.25px] hover:border-[var(--neutral-400)] focus:border-[var(--neutral-400)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <option value=""> </option>
+                  <option value="AB">AB</option>
+                  <option value="EF">EF</option>
+                  <option value="HB">HB</option>
+                  <option value="Förening">Förening</option>
+                </select>
+                <div className="absolute right-[8px] top-1/2 -translate-y-1/2 pointer-events-none">
+                  <MdOutlineArrowDropDown style={{ width: '16px', height: '16px', color: 'var(--neutral-600)' }} />
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div>
-        <Label htmlFor="name">Företagsnamn *</Label>
-        <Input 
-          id="name" 
-          name="name" 
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required 
-          disabled={isSubmitting}
-        />
-      </div>
+          {/* Räkenskapsår start + slut Row */}
+          <div className="flex gap-[12px] items-start w-full max-w-[360px]">
+            <div className="flex-1 flex flex-col gap-[8px] items-start min-w-0">
+              <Label htmlFor="rakningsar_start">Räkenskapsår start</Label>
+              <Input 
+                id="rakningsar_start" 
+                name="rakningsar_start" 
+                type="date"
+                value={rakningsarStart}
+                onChange={(e) => setRakningsarStart(e.target.value)}
+                disabled={isSubmitting}
+                inputSize="medium"
+                rightIcon={<MdOutlineCalendarToday style={{ width: '16px', height: '16px' }} />}
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-[8px] items-start min-w-0">
+              <Label htmlFor="rakningsar_slut">Räkenskapsår slut</Label>
+              <Input 
+                id="rakningsar_slut" 
+                name="rakningsar_slut" 
+                type="date"
+                value={rakningsarSlut}
+                onChange={(e) => setRakningsarSlut(e.target.value)}
+                disabled={isSubmitting}
+                inputSize="medium"
+                rightIcon={<MdOutlineCalendarToday style={{ width: '16px', height: '16px' }} />}
+              />
+            </div>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="orgnr">Organisationsnummer</Label>
-          <Input 
-            id="orgnr" 
-            name="orgnr" 
-            value={orgnr}
-            onChange={(e) => setOrgnr(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
+          {/* Kontaktperson */}
+          <div className="flex flex-col gap-[8px] items-start w-full max-w-[360px]">
+            <Label htmlFor="kontaktperson">Kontaktperson</Label>
+            <Input 
+              id="kontaktperson" 
+              name="kontaktperson" 
+              value={kontaktperson}
+              onChange={(e) => setKontaktperson(e.target.value)}
+              disabled={isSubmitting}
+              inputSize="medium"
+            />
+          </div>
 
-        <div>
-          <Label htmlFor="bolagsform">Bolagsform</Label>
-          <select
-            id="bolagsform"
-            name="bolagsform"
-            value={bolagsform}
-            onChange={(e) => setBolagsform(e.target.value)}
-            disabled={isSubmitting}
-            className="w-full h-10 px-4 py-2 bg-white border border-gray-300 rounded-md hover:border-gray-400 focus:border-gray-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-          >
-            <option value="">Välj bolagsform</option>
-            <option value="AB">AB</option>
-            <option value="EF">EF</option>
-            <option value="HB">HB</option>
-            <option value="Förening">Förening</option>
-          </select>
-        </div>
-      </div>
+          {/* E-post */}
+          <div className="flex flex-col gap-[8px] items-start w-full max-w-[360px]">
+            <Label htmlFor="epost">E-post</Label>
+            <Input 
+              id="epost" 
+              name="epost" 
+              type="email"
+              value={epost}
+              onChange={(e) => setEpost(e.target.value)}
+              disabled={isSubmitting}
+              inputSize="medium"
+            />
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="ansvarig_konsult">Ansvarig konsult</Label>
-          <Input 
-            id="ansvarig_konsult" 
-            name="ansvarig_konsult" 
-            value={ansvarigKonsult}
-            onChange={(e) => setAnsvarigKonsult(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="kontaktperson">Kontaktperson</Label>
-          <Input 
-            id="kontaktperson" 
-            name="kontaktperson" 
-            value={kontaktperson}
-            onChange={(e) => setKontaktperson(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="epost">E-post</Label>
-          <Input 
-            id="epost" 
-            name="epost" 
-            type="email"
-            value={epost}
-            onChange={(e) => setEpost(e.target.value)}
-            disabled={isSubmitting}
-          />
+          {/* Telefon */}
+          <div className="flex flex-col gap-[8px] items-start w-full max-w-[360px]">
+            <Label htmlFor="telefon">Telefon</Label>
+            <Input 
+              id="telefon" 
+              name="telefon" 
+              type="tel"
+              value={telefon}
+              onChange={(e) => setTelefon(e.target.value)}
+              disabled={isSubmitting}
+              inputSize="medium"
+            />
+          </div>
         </div>
 
-        <div>
-          <Label htmlFor="telefon">Telefon</Label>
-          <Input 
-            id="telefon" 
-            name="telefon" 
-            type="tel"
-            value={telefon}
-            onChange={(e) => setTelefon(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="rakningsar_start">Räkenskapsår start</Label>
-          <Input 
-            id="rakningsar_start" 
-            name="rakningsar_start" 
-            type="date"
-            value={rakningsarStart}
-            onChange={(e) => setRakningsarStart(e.target.value)}
-            disabled={isSubmitting}
-          />
+        {/* Divider */}
+        <div className="w-full">
+          <div className="bg-[var(--neutral-100)] h-px w-full" />
         </div>
 
-        <div>
-          <Label htmlFor="rakningsar_slut">Räkenskapsår slut</Label>
-          <Input 
-            id="rakningsar_slut" 
-            name="rakningsar_slut" 
-            type="date"
-            value={rakningsarSlut}
-            onChange={(e) => setRakningsarSlut(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
-      </div>
+        {/* Second Section - Kundinformation */}
+        <div className="flex flex-col gap-[20px] items-start w-full max-w-[360px]">
+          <Text variant="label-small" style={{ color: 'var(--neutral-500)' }}>
+            Kundinformation
+          </Text>
 
-      <div>
-        <Label htmlFor="tjanster">Tjänster</Label>
-        <Textarea 
-          id="tjanster" 
-          name="tjanster" 
-          value={tjanster}
-          onChange={(e) => setTjanster(e.target.value)}
-          disabled={isSubmitting}
-          placeholder="t.ex. Bokföring, bokslut"
-        />
-      </div>
+          {/* Ansvarig konsult */}
+          <div className="flex flex-col gap-[8px] items-start w-full">
+            <Label htmlFor="ansvarig_konsult">Ansvarig konsult</Label>
+            <Input 
+              id="ansvarig_konsult" 
+              name="ansvarig_konsult" 
+              value={ansvarigKonsult}
+              onChange={(e) => setAnsvarigKonsult(e.target.value)}
+              disabled={isSubmitting}
+              inputSize="medium"
+            />
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="fortnox_id">Fortnox ID</Label>
-          <Input 
-            id="fortnox_id" 
-            name="fortnox_id" 
-            value={fortnoxId}
-            onChange={(e) => setFortnoxId(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
+          {/* Tjänster */}
+          <div className="flex flex-col gap-[8px] items-start w-full">
+            <Label htmlFor="tjanster">Tjänster</Label>
+            <Input
+              id="tjanster"
+              name="tjanster"
+              value={tjanster}
+              onChange={(e) => setTjanster(e.target.value)}
+              disabled={isSubmitting}
+              inputSize="medium"
+              rightIcon={<MdOutlineArrowDropDown style={{ width: '16px', height: '16px' }} />}
+              placeholder="t.ex. Bokföring, bokslut"
+            />
+          </div>
 
-        <div>
-          <Label htmlFor="status">Status</Label>
-          <select
-            id="status"
-            name="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as 'Aktiv' | 'Passiv')}
-            disabled={isSubmitting}
-            className="w-full h-10 px-4 py-2 bg-white border border-gray-300 rounded-md hover:border-gray-400 focus:border-gray-400 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-          >
-            <option value="Aktiv">Aktiv</option>
-            <option value="Passiv">Passiv</option>
-          </select>
+          {/* Fortnox ID */}
+          <div className="flex flex-col gap-[8px] items-start w-full">
+            <Label htmlFor="fortnox_id">Fortnox ID</Label>
+            <Input 
+              id="fortnox_id" 
+              name="fortnox_id" 
+              value={fortnoxId}
+              onChange={(e) => setFortnoxId(e.target.value)}
+              disabled={isSubmitting}
+              inputSize="medium"
+            />
+          </div>
+
+          {/* Status */}
+          <div className="flex flex-col gap-[8px] items-start w-full">
+            <Label htmlFor="status">Status</Label>
+            <div className="relative w-full">
+              <select
+                id="status"
+                name="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'Aktiv' | 'Passiv')}
+                disabled={isSubmitting}
+                className="w-full appearance-none bg-[var(--neutral-0)] border border-[var(--neutral-300)] rounded-[6px] h-[32px] px-[12px] pr-[28px] py-[10px] text-[12px] text-[var(--neutral-600)] font-normal leading-[16px] tracking-[0.25px] hover:border-[var(--neutral-400)] focus:border-[var(--neutral-400)] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <option value="Aktiv">Aktiv</option>
+                <option value="Passiv">Passiv</option>
+              </select>
+              <div className="absolute right-[8px] top-1/2 -translate-y-1/2 pointer-events-none">
+                <MdOutlineArrowDropDown style={{ width: '16px', height: '16px', color: 'var(--neutral-600)' }} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
