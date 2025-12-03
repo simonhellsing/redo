@@ -173,7 +173,7 @@ export function AcceptAdminInvitationForm({ invitation, workspaceName, workspace
           onChange={(e) => setName(e.target.value)}
           required
           disabled={isLoading}
-          size="large"
+          inputSize="large"
           className="w-full"
         />
       </div>
@@ -188,7 +188,7 @@ export function AcceptAdminInvitationForm({ invitation, workspaceName, workspace
           required
           disabled={isLoading}
           minLength={6}
-          size="large"
+          inputSize="large"
           className="w-full"
           rightIcon={
             <button
