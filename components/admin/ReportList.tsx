@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/DataTable'
 import Link from 'next/link'
 import { PublishReportButton } from './PublishReportButton'
 

@@ -5,6 +5,8 @@ import { createServerSupabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import { SimulationsSection } from '@/components/customer/SimulationsSection'
 
+import { getCustomerUserInfo } from '@/lib/auth/getCustomerUserInfo'
+
 export default async function ReportDetailPage({
   params,
 }: {
@@ -12,12 +14,18 @@ export default async function ReportDetailPage({
 }) {
   const { reportId } = await params
   const supabase = await createServerSupabase()
+  const customerInfo = await getCustomerUserInfo()
+
+  if (!customerInfo?.customer) {
+    notFound()
+  }
 
   const { data: report } = await supabase
     .from('reports')
     .select('*, customers(*)')
     .eq('id', reportId)
     .eq('status', 'published')
+    .eq('customer_id', customerInfo.customer.id)
     .single()
 
   if (!report) {

@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/Badge'
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/DataTable'
 
 interface SourceDocument {
   id: string

@@ -12,8 +12,9 @@ import { SourceDocumentUploadForm } from '@/components/admin/SourceDocumentUploa
 import { EditCustomerButton } from '@/components/admin/EditCustomerButton'
 import { CustomerLedgerReport } from '@/components/admin/CustomerLedgerReport'
 import { InviteCustomerUserButton } from '@/components/admin/InviteCustomerUserButton'
+import { PublishReportModal } from '@/components/admin/PublishReportModal'
 import { parseHuvudbokCsv, Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
-import { MdOutlineUpload } from 'react-icons/md'
+import { MdOutlineUpload, MdOutlinePublish } from 'react-icons/md'
 
 interface Customer {
   id: string
@@ -101,6 +102,8 @@ export function CustomerDetailContent({
     }
     return null
   })
+  const [showPublishModal, setShowPublishModal] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const customerLogo = customer.logo_url ? (
@@ -177,6 +180,39 @@ export function CustomerDetailContent({
 
   const hasSourceDocuments = sourceDocuments.length > 0
   const hasTransactions = transactions && transactions.length > 0
+  const canPublish = hasSourceDocuments && latestReport && latestReport.status === 'generated'
+
+  async function handlePublish() {
+    if (!latestReport) return
+
+    setIsPublishing(true)
+    try {
+      const response = await fetch('/api/reports/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId: latestReport.id, customerId: customer.id }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to publish report')
+      }
+
+      const data = await response.json()
+      
+      // Show invitation link (for dev)
+      if (data.invitationLink) {
+        console.log('Invitation link:', data.invitationLink)
+      }
+
+      setShowPublishModal(false)
+      router.refresh()
+    } catch (error) {
+      console.error('Error publishing report:', error)
+      alert('Kunde inte publicera rapporten. Försök igen.')
+    } finally {
+      setIsPublishing(false)
+    }
+  }
 
   // Format upload date for display
   const formatUploadDate = (date: Date): string => {
@@ -222,6 +258,16 @@ export function CustomerDetailContent({
         }
         actions={
           <>
+            {canPublish && (
+              <Button
+                variant="primary"
+                size="small"
+                leftIcon={<MdOutlinePublish />}
+                onClick={() => setShowPublishModal(true)}
+              >
+                Publicera
+              </Button>
+            )}
             <InviteCustomerUserButton customerId={customer.id} customerName={customer.name} />
             <EditCustomerButton
               customer={{
@@ -313,6 +359,15 @@ export function CustomerDetailContent({
           </div>
         )}
       </div>
+
+      {/* Publish Report Modal */}
+      <PublishReportModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        onConfirm={handlePublish}
+        customerName={customer.name}
+        isLoading={isPublishing}
+      />
     </div>
   )
 }

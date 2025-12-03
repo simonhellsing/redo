@@ -282,7 +282,7 @@ export function CustomerLedgerReport({
       {/* Transaction Preview Table */}
       <Card padding="lg">
         <div className="flex flex-col gap-4">
-          <Text variant="headline-small" className="text-[var(--neutral-900)]">
+          <Text variant="title-small" className="text-[var(--neutral-900)]">
             Senaste transaktioner
           </Text>
           <div className="overflow-x-auto">

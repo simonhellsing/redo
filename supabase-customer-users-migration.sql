@@ -64,4 +64,3 @@ CREATE POLICY "Customers can view their published reports"
       WHERE user_id = auth.uid()
     )
   );
-

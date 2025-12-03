@@ -3,25 +3,37 @@ import { ButtonLink } from '@/components/ui/ButtonLink'
 import { Badge } from '@/components/ui/Badge'
 import { createServerSupabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth/getCurrentUser'
+import { getCustomerUserInfo } from '@/lib/auth/getCustomerUserInfo'
 
 export default async function MyReportsPage() {
   const user = await getCurrentUser()
   const supabase = await createServerSupabase()
+  const customerInfo = await getCustomerUserInfo()
 
-  // For MVP, we'll need to link customers to users
-  // For now, this is a placeholder - you'll need to add a customer_users table
-  // or handle this differently based on your invitation flow
-  
-  // Placeholder: Get published reports (this will need proper customer-user linking)
+  if (!customerInfo?.customer) {
+    return (
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Rapport</h1>
+        <Card>
+          <div className="text-center py-12">
+            <p className="text-gray-500">Ingen kund kopplad till ditt konto.</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  // Get published reports for this customer
   const { data: reports } = await supabase
     .from('reports')
     .select('*, customers(*)')
     .eq('status', 'published')
+    .eq('customer_id', customerInfo.customer.id)
     .order('created_at', { ascending: false })
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">My Reports</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Rapport</h1>
 
       {reports && reports.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -39,7 +51,7 @@ export default async function MyReportsPage() {
                 </p>
               )}
               <ButtonLink href={`/reports/${report.id}`} variant="outline" size="sm" className="w-full">
-                View Report
+                Visa rapport
               </ButtonLink>
             </Card>
           ))}
@@ -47,7 +59,7 @@ export default async function MyReportsPage() {
       ) : (
         <Card>
           <div className="text-center py-12">
-            <p className="text-gray-500">No published reports available</p>
+            <p className="text-gray-500">Inga publicerade rapporter tillgängliga</p>
           </div>
         </Card>
       )}

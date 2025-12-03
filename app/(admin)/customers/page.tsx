@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/Card'
 import { ButtonLink } from '@/components/ui/ButtonLink'
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/Table'
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/DataTable'
 import { Badge } from '@/components/ui/Badge'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { AddCustomerButton } from '@/components/admin/AddCustomerButton'
