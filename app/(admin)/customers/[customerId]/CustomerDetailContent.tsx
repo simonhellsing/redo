@@ -17,7 +17,7 @@ import { useAddCustomerModal } from '@/components/admin/AddCustomerModalContext'
 import { IconButton } from '@/components/ui/IconButton'
 import { Menu, MenuItem } from '@/components/ui/Menu'
 import { parseHuvudbokCsv, Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
-import { MdOutlineUpload, MdOutlinePublish, MdOutlineMoreVert } from 'react-icons/md'
+import { MdOutlineUpload, MdOutlinePublish, MdOutlineMoreHoriz } from 'react-icons/md'
 import type { Customer } from '@/lib/types/customer'
 
 interface SourceDocument {
@@ -318,9 +318,9 @@ export function CustomerDetailContent({
             <div className="relative">
               <IconButton
                 ref={moreButtonRef}
-                variant="navigation"
-                size="small"
-                icon={<MdOutlineMoreVert />}
+                variant="tertiary"
+                size="medium"
+                icon={<MdOutlineMoreHoriz />}
                 aria-label="Mer alternativ"
                 onClick={() => setShowMoreMenu(!showMoreMenu)}
               />
@@ -340,6 +340,17 @@ export function CustomerDetailContent({
                 </div>
               )}
             </div>
+            <InviteCustomerUserButton customerId={customer.id} customerName={customer.name} />
+            <div className="bg-[var(--neutral-200)] w-px h-[24px]" />
+            <Button
+              variant={hasSourceDocuments ? "secondary" : "primary"}
+              size="small"
+              leftIcon={<MdOutlineUpload />}
+              onClick={handleUploadClick}
+              disabled={isParsing}
+            >
+              {isParsing ? 'Laddar...' : hasSourceDocuments ? 'Uppdatera huvudbok' : 'Ladda upp huvudbok'}
+            </Button>
             {canPublish && (
               <Button
                 variant="primary"
@@ -350,16 +361,6 @@ export function CustomerDetailContent({
                 Publicera
               </Button>
             )}
-            <InviteCustomerUserButton customerId={customer.id} customerName={customer.name} />
-            <Button
-              variant="primary"
-              size="small"
-              leftIcon={<MdOutlineUpload />}
-              onClick={handleUploadClick}
-              disabled={isParsing}
-            >
-              {isParsing ? 'Laddar...' : 'Ladda upp huvudbok'}
-            </Button>
             <input
               ref={fileInputRef}
               type="file"

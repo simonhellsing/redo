@@ -248,7 +248,7 @@ export function CustomerForm({
         </div>
       )}
 
-      <div className="flex flex-col gap-[32px] items-center w-full px-[20px] py-[40px]">
+      <div className="flex flex-col gap-[32px] items-center w-full">
         {/* First Section */}
         <div className="flex flex-col gap-[20px] items-center w-full">
           {/* Logo Upload */}

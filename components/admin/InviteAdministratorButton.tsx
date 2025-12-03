@@ -81,7 +81,7 @@ export function InviteAdministratorButton({ onClose }: InviteAdministratorButton
           confirmDisabled={isLoading || !email}
           cancelLabel="Avbryt"
         >
-          <div className="flex flex-col gap-[32px] items-center w-full px-[20px] py-[40px]">
+          <div className="flex flex-col gap-[32px] items-center w-full">
             <div className="flex flex-col gap-[20px] items-start w-full max-w-[360px]">
               <Text variant="body-small" style={{ color: 'var(--neutral-600)' }}>
                 Skicka en inbjudan till en ny administratör. De kommer att få ett e-postmeddelande med en länk för att skapa ett konto och få tillgång till administrationsgränssnittet.

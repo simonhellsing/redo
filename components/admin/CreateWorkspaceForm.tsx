@@ -68,7 +68,7 @@ export function CreateWorkspaceForm() {
           placeholder="Mitt redovisningsföretag"
           required
           disabled={isCreating}
-          size="large"
+          inputSize="large"
           className="w-full"
         />
         <Text variant="body-small" style={{ color: 'var(--neutral-500)', marginTop: '4px' }}>

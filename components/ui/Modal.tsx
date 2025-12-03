@@ -51,7 +51,7 @@ export function Modal({
     >
       <ModalHeader title={title} onClose={onClose} />
       
-      <div className="flex flex-col gap-[20px] w-full flex-1 min-h-0 overflow-y-auto">
+      <div className="flex flex-col gap-[20px] w-full flex-1 min-h-0 overflow-y-auto py-[20px]">
         {children}
       </div>
       

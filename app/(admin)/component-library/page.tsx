@@ -15,6 +15,7 @@ import { Table } from '@/components/ui/Table'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Illustration } from '@/components/ui/Illustration'
 import { QuickAction } from '@/components/ui/QuickAction'
+import { KPI } from '@/components/ui/KPI'
 import { MdOutlineLanguage, MdOutlineChromeReaderMode, MdOutlineSettings, MdOutlineSearch, MdOutlineClose } from 'react-icons/md'
 
 export default function ComponentLibraryPage() {
@@ -843,6 +844,48 @@ export default function ComponentLibraryPage() {
                 illustrationType="kit"
                 label="Kit"
                 onClick={() => console.log('Kit clicked')}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* KPI Component */}
+        <div className="flex flex-col gap-[20px]">
+          <Text variant="body-medium" className="text-[var(--neutral-400)] tracking-[0.5px]">
+            01 Components
+          </Text>
+          <Text variant="headline-large" className="text-[var(--neutral-900)]">
+            KPI
+          </Text>
+        </div>
+
+        <div className="h-px bg-[var(--neutral-200)] w-full" />
+
+        <div className="flex flex-col gap-[32px]">
+          <div className="flex flex-col gap-[16px]">
+            <Text variant="title-medium" className="text-[var(--neutral-900)]">
+              Default
+            </Text>
+            <div className="flex flex-wrap gap-[16px]">
+              <KPI
+                label="Omsättning"
+                value="3,45 mkr"
+                change={{
+                  percentage: '+16%',
+                  isPositive: true,
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-[16px]">
+            <Text variant="title-medium" className="text-[var(--neutral-900)]">
+              Without Change Indicator
+            </Text>
+            <div className="flex flex-wrap gap-[16px]">
+              <KPI
+                label="Omsättning"
+                value="3,45 mkr"
               />
             </div>
           </div>
