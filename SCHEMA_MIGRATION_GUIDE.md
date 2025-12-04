@@ -1,12 +1,20 @@
 # Database Schema Migration Guide
 
 ## Overview
-This migration improves the database schema by adding explicit `workspace_id` columns to `customer_users` and `reports` tables, making workspace relationships explicit and improving query performance.
+This guide describes the **workspace_id** migration applied to the database. The original
+SQL file (`supabase-improved-schema-migration.sql`) has been removed from the repo; use
+this document to verify that your schema matches what the code expects and to create an
+equivalent migration inside Supabase if needed.
+
+The goal is to add explicit `workspace_id` columns to `customer_users` and `reports`
+tables, making workspace relationships explicit and improving query performance.
 
 ## Migration Steps
 
-### 1. Run the SQL Migration
-Execute `supabase-improved-schema-migration.sql` in your Supabase SQL Editor. This will:
+### 1. Apply the Workspace ID Migration
+
+Ensure your database has had the workspace ID migration applied. In practical terms, your
+schema and data should satisfy the following:
 - Add `workspace_id` to `customer_users` table
 - Add `workspace_id` to `reports` table
 - Populate existing data with workspace IDs
@@ -65,15 +73,11 @@ WHERE NOT EXISTS (
 
 ### 5. Rollback (if needed)
 
-If you need to rollback:
+If you need to rollback in a development or staging environment, you can:
 
-```sql
--- Remove workspace_id columns (data will be lost)
-ALTER TABLE customer_users DROP COLUMN IF EXISTS workspace_id;
-ALTER TABLE reports DROP COLUMN IF EXISTS workspace_id;
-
--- Restore old RLS policies (see supabase-customer-users-migration.sql)
-```
+- Drop the `workspace_id` columns from `customer_users` and `reports` (data will be lost)
+- Restore your previous RLS policies using Supabase’s migration history or by re‑creating
+  the old policies manually
 
 ## Notes
 

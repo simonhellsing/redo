@@ -89,10 +89,9 @@ After your first deployment, you need to add environment variables:
    - Go to [app.supabase.com](https://app.supabase.com)
    - Create a new project for staging
 
-2. **Run the database schema**:
-   - Go to SQL Editor in Supabase
-   - Run the contents of `supabase-schema.sql`
-   - Run the contents of `supabase-storage-policies.sql`
+2. **Configure the database schema and storage policies**:
+   - Ensure your staging database matches the expectations described in `DB_MIGRATIONS.md`
+     (tables, workspace IDs, customer fields, and storage buckets/policies)
 
 3. **Create storage buckets**:
    - `branding` (public)

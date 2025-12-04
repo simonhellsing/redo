@@ -22,7 +22,7 @@ Financial reporting and analysis platform for small businesses.
 
 2. **Set up Supabase:**
    - Create a new Supabase project
-   - Run the SQL schema from `supabase-schema.sql` in your Supabase SQL Editor
+   - Ensure your database schema matches the expectations described in `DB_MIGRATIONS.md` (initial schema, workspace IDs, customer fields, and storage policies)
    - Create storage buckets:
      - `branding` (public)
      - `source-documents` (private)
@@ -70,7 +70,7 @@ Financial reporting and analysis platform for small businesses.
 
 ## Database Schema
 
-See `supabase-schema.sql` for the complete database schema including:
+See `DB_MIGRATIONS.md` for the expected database schema and migrations, including:
 - Profiles
 - Workspaces
 - Workspace members

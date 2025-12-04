@@ -2,16 +2,15 @@
 
 ## Step 1: Create All Tables
 
-You need to run the complete database schema in your Supabase SQL Editor.
+Create the core tables and relationships described in `DB_MIGRATIONS.md` in your Supabase
+project. You can either:
 
-1. **Open Supabase Dashboard**: Go to https://app.supabase.com
-2. **Select your project**
-3. **Go to SQL Editor** (left sidebar)
-4. **Click "New query"**
-5. **Copy and paste the ENTIRE contents of `supabase-schema.sql`**
-6. **Click "Run"** (or press Cmd/Ctrl + Enter)
+1. **Use Supabase Dashboard**: Go to https://app.supabase.com, open **Table Editor**, and
+   create the tables with the names and relationships described there, or
+2. **Use your own SQL migrations**: Define migrations that result in the same final
+   structure as documented in `DB_MIGRATIONS.md`.
 
-This will create:
+At minimum, you should have:
 - ✅ `profiles` table
 - ✅ `workspaces` table  
 - ✅ `workspace_members` table
@@ -42,12 +41,14 @@ After creating the tables, you need to create storage buckets:
 
 ## Step 2.5: Set Up Storage Policies
 
-After creating the buckets, you need to set up RLS policies for storage:
+After creating the buckets, you need to set up RLS policies for storage so that:
 
-1. **Go to SQL Editor** in Supabase
-2. **Run the contents of `supabase-storage-policies.sql`**
-   - This creates policies that allow authenticated users to upload/view files
-   - Without these policies, you'll get RLS errors when uploading files
+1. Authenticated users can upload and view files they are allowed to see
+2. Public buckets (`branding`, `customer-logos`) are readable publicly
+3. Private buckets (`source-documents`) are only readable by authorized users
+
+You can define these policies directly in the Supabase Dashboard using the **Policies**
+tab for each bucket, following the expectations described in `DB_MIGRATIONS.md`.
 
 ## Step 3: Verify Setup
 
@@ -60,7 +61,8 @@ After running the schema, verify everything is set up:
 ## Troubleshooting
 
 If you get errors:
-- Make sure you're running the **entire** `supabase-schema.sql` file
+- Make sure your tables, columns, and relationships match the expectations in
+  `DB_MIGRATIONS.md`
 - Check for any existing tables that might conflict
 - Look at the error message - it will tell you what's wrong
 

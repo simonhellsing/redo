@@ -91,7 +91,8 @@ This document summarizes the comprehensive refactoring performed to make the Red
 
 ### For Existing Data
 
-If you have existing data, run `supabase-migration.sql`:
+If you have existing data, you will need a migration that performs the following steps
+(see `DB_MIGRATIONS.md` for context):
 
 1. **Update profiles roles**:
    ```sql
@@ -151,7 +152,6 @@ If you have existing data, run `supabase-migration.sql`:
 
 ## 6. Files Created
 
-- `supabase-migration.sql` - Migration script for existing data
 - `components/admin/SourceDocumentUploadForm.tsx` - New upload form
 - `components/admin/SupportingDocumentsList.tsx` - Document list component
 - `app/api/source-documents/upload/route.ts` - New upload API
@@ -178,10 +178,11 @@ If you have existing data, run `supabase-migration.sql`:
 
 ## 9. Next Steps
 
-1. **Run database schema**: Execute `supabase-schema.sql` in Supabase
+1. **Ensure database schema is up to date**: Verify your schema matches `DB_MIGRATIONS.md`
 2. **Create storage bucket**: Create `source-documents` bucket
 3. **Test thoroughly**: Verify all functionality works
-4. **Migrate existing data**: If applicable, run migration script
+4. **Migrate existing data**: If applicable, create and run a migration that performs the
+   steps described above
 5. **Update documentation**: Update any external docs
 
 ## Notes

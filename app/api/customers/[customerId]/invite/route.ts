@@ -2,6 +2,7 @@ import { createServerSupabase, createAdminSupabase } from '@/lib/supabase/server
 import { requireAdministrator } from '@/lib/auth/requireAdministrator'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
+import { getBaseUrl } from '@/lib/utils'
 
 export async function POST(
   request: NextRequest,
@@ -108,8 +109,8 @@ export async function POST(
       console.log('Verified invitation exists:', verifyInvitation)
     }
 
-    // For dev: return the invitation link
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'
+    // Return the invitation link (used in both dev and production)
+    const baseUrl = getBaseUrl(request)
     const invitationLink = `${baseUrl}/customer/invite/${token}`
 
     console.log('Returning invitation link:', invitationLink)
