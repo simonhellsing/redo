@@ -28,10 +28,25 @@ export default async function AdminRootLayout({
     if (!currentUser) {
       redirect('/login')
     }
-    // If profile doesn't exist, getCurrentUser should have created it
-    // But if it still doesn't exist, allow access anyway for workspace setup
+
+    // Only administrators should ever see the workspace setup page.
+    // Customers or other roles should be redirected to their respective areas.
+    if (currentUser.profile?.role !== 'administrator') {
+      if (currentUser.profile?.role === 'customer') {
+        redirect('/my-reports')
+      }
+      redirect('/unauthorized')
+    }
+
+    // If this administrator already has a workspace, there is no need to show setup –
+    // send them to the normal overview dashboard instead.
+    const existingWorkspace = await getUserWorkspace()
+    if (existingWorkspace) {
+      redirect('/overview')
+    }
+
     user = currentUser
-    // Don't try to get workspace for setup page - we know there isn't one yet
+
     // Just render the setup page without navigation
     return (
       <div className="w-full h-screen overflow-hidden bg-[#ffffff]">

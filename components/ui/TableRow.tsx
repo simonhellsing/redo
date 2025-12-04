@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { DataTableCell } from './DataTableCell'
 import { Tag } from './Tag'
@@ -38,7 +38,8 @@ export function TableRow({
   className,
   ...props
 }: TableRowProps) {
-  const isHover = state === 'hover'
+  const [isHovered, setIsHovered] = useState(false)
+  const isHover = state === 'hover' || isHovered
   const backgroundClass = isHover ? 'bg-[var(--neutral-100)]' : 'bg-[var(--neutral-0)]'
 
   const handleRowClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -50,6 +51,8 @@ export function TableRow({
 
   return (
     <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={onActionClick ? handleRowClick : undefined}
       className={cn(
         backgroundClass,

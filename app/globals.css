@@ -172,7 +172,7 @@ body {
     font-family: var(--font-inter), sans-serif !important;
     font-weight: 600 !important;
     font-size: 14px !important;
-    line-height: 20px !important;
+    line-height: 20px;
     letter-spacing: 0 !important;
   }
   
@@ -180,7 +180,7 @@ body {
     font-family: var(--font-inter), sans-serif !important;
     font-weight: 600 !important;
     font-size: 12px !important;
-    line-height: 16px !important;
+    line-height: 16px;
     letter-spacing: 0 !important;
   }
   
@@ -188,7 +188,7 @@ body {
     font-family: var(--font-inter), sans-serif !important;
     font-weight: 600 !important;
     font-size: 12px !important;
-    line-height: 16px !important;
+    line-height: 16px;
     letter-spacing: 0 !important;
   }
   

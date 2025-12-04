@@ -7,7 +7,7 @@ import { TableRow } from '@/components/ui/TableRow'
 import { TableHeaderControl } from '@/components/ui/TableHeaderControl'
 import { Divider } from '@/components/ui/Divider'
 import { Spinner } from '@/components/ui/Spinner'
-import { MdOutlineCloudUpload } from 'react-icons/md'
+import { MdOutlineCloudUpload, MdCheck } from 'react-icons/md'
 
 interface ParsedCustomer {
   company_name: string
@@ -23,6 +23,10 @@ interface ParsedCustomer {
   tjänster: string | null
   fortnox_id: string | null
   status: 'Aktiv' | 'Passiv'
+}
+
+type SelectableCustomer = ParsedCustomer & {
+  selected: boolean
 }
 
 interface UploadCustomerListModalProps {
@@ -42,7 +46,7 @@ export function UploadCustomerListModal({
 }: UploadCustomerListModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-  const [customers, setCustomers] = useState<ParsedCustomer[]>([])
+  const [customers, setCustomers] = useState<SelectableCustomer[]>([])
   const [loadingLogos, setLoadingLogos] = useState<Set<number>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -73,17 +77,21 @@ export function UploadCustomerListModal({
       }
 
       const data = await response.json()
-      const parsedCustomers = data.customers || []
-      
-      // Set customers and start logo fetching
-      setCustomers(parsedCustomers)
-      
+      const parsedCustomers: ParsedCustomer[] = data.customers || []
+
+      // Set customers with all rows selected by default and start logo fetching
+      const customersWithSelection: SelectableCustomer[] = parsedCustomers.map((customer) => ({
+        ...customer,
+        selected: true,
+      }))
+
+      setCustomers(customersWithSelection)
+
       // Fetch logos progressively after customers are loaded
-      // Use setTimeout to ensure state is set before starting logo fetch
-      if (parsedCustomers.length > 0) {
-        // Start logo fetching in next tick to ensure state is updated
+      // Use next tick to ensure state is set before starting logo fetch
+      if (customersWithSelection.length > 0) {
         Promise.resolve().then(() => {
-          fetchLogosProgressively(parsedCustomers)
+          fetchLogosProgressively(customersWithSelection)
         })
       }
     } catch (err: any) {
@@ -94,7 +102,7 @@ export function UploadCustomerListModal({
     }
   }, [])
 
-  const fetchLogosProgressively = useCallback(async (customersToFetch: ParsedCustomer[]) => {
+  const fetchLogosProgressively = useCallback(async (customersToFetch: SelectableCustomer[]) => {
     // Prevent multiple simultaneous logo fetching processes
     if (isFetchingLogosRef.current) {
       console.warn('Logo fetching already in progress, skipping')
@@ -197,8 +205,6 @@ export function UploadCustomerListModal({
     }
   }, [isOpen, initialFile, handleFileProcess])
 
-  if (!isOpen) return null
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -210,7 +216,8 @@ export function UploadCustomerListModal({
   }
 
   const handleAddCustomers = async () => {
-    if (customers.length === 0) return
+    const selectedCustomers = customers.filter((customer) => customer.selected)
+    if (selectedCustomers.length === 0) return
 
     setIsUploading(true)
     setError(null)
@@ -223,7 +230,7 @@ export function UploadCustomerListModal({
         },
         body: JSON.stringify({
           workspace_id: workspaceId,
-          customers,
+          customers: selectedCustomers,
         }),
       })
 
@@ -261,35 +268,26 @@ export function UploadCustomerListModal({
     onClose()
   }
 
+  const selectedCount = customers.filter((customer) => customer.selected).length
+  const confirmLabel =
+    isUploading
+      ? 'Lägger till...'
+      : selectedCount > 0
+        ? `Lägg till ${selectedCount} kund${selectedCount > 1 ? 'er' : ''}`
+        : 'Lägg till kunder'
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-end p-[8px]"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.12)',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          handleClose()
-        }
-      }}
+    <Modal
+      isOpen={isOpen}
+      title="Ladda upp kundlista"
+      onClose={handleClose}
+      onCancel={handleClose}
+      contentClassName="pt-0 pb-0"
+      onConfirm={selectedCount > 0 ? handleAddCustomers : undefined}
+      cancelLabel="Avbryt"
+      confirmLabel={confirmLabel}
+      confirmDisabled={selectedCount === 0 || isUploading}
     >
-      <div onClick={(e) => e.stopPropagation()} className="h-full">
-        <Modal
-          title="Ladda upp kundlista"
-          onClose={handleClose}
-          onCancel={handleClose}
-          onConfirm={customers.length > 0 ? handleAddCustomers : undefined}
-          cancelLabel="Avbryt"
-          confirmLabel={isUploading ? 'Lägger till...' : 'Lägg till kunder'}
-          confirmDisabled={customers.length === 0 || isUploading}
-          footerLeftContent={
-            customers.length > 0 ? (
-              <Text variant="body-small" style={{ color: 'var(--neutral-600)' }}>
-                {customers.length} kunder
-              </Text>
-            ) : undefined
-          }
-        >
           <div className="flex flex-col gap-4 w-full flex-1 min-h-0 overflow-hidden">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex-shrink-0 mx-[20px] mt-[40px]">
@@ -343,42 +341,86 @@ export function UploadCustomerListModal({
                         <React.Fragment key={index}>
                           <div className="relative w-full">
                             <div className="bg-[var(--neutral-0)] flex gap-[32px] h-[48px] items-center px-[12px] py-[4px] rounded-[12px] w-full">
-                              {/* Logo + Name Column */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-[8px] rounded-[8px] p-[8px] w-full">
-                                  {loadingLogos.has(index) ? (
-                                    <div className="rounded-[8px] shrink-0 bg-[var(--neutral-200)] flex items-center justify-center" style={{ width: '24px', height: '24px' }}>
-                                      <Spinner size="sm" style={{ color: 'var(--neutral-600)' }} />
-                                    </div>
-                                  ) : logoUrl ? (
-                                    <img
-                                      src={logoUrl}
-                                      alt=""
-                                      className="rounded-[8px] shrink-0"
-                                      style={{ width: '24px', height: '24px', objectFit: 'cover' }}
+                              {/* Selection Checkbox + Logo/Name Column */}
+                              <div className="flex flex-1 min-w-0 items-center gap-[4px]">
+                                <div className="shrink-0 flex items-center justify-center">
+                                  <label className="flex items-center justify-center cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={customer.selected}
+                                      onChange={(e) => {
+                                        const isChecked = e.target.checked
+                                        setCustomers((prev) =>
+                                          prev.map((c, i) =>
+                                            i === index ? { ...c, selected: isChecked } : c
+                                          )
+                                        )
+                                      }}
+                                      className="sr-only"
+                                      aria-label={`Välj kund ${customer.company_name}`}
                                     />
-                                  ) : (
-                                    <div
-                                      className="rounded-[8px] shrink-0 bg-[var(--neutral-200)]"
-                                      style={{ width: '24px', height: '24px' }}
-                                    />
-                                  )}
-                                  <Text
-                                    variant="label-small"
-                                    as="span"
-                                    className="whitespace-pre text-[var(--neutral-700)] flex-1 min-w-0"
+                                    <span
+                                      className="flex h-4 w-4 items-center justify-center rounded-[4px] border transition-colors"
+                                      style={{
+                                        borderColor: customer.selected
+                                          ? 'var(--brand-primary)'
+                                          : 'var(--neutral-300)',
+                                        backgroundColor: customer.selected
+                                          ? 'var(--brand-primary)'
+                                          : 'var(--neutral-0)',
+                                      }}
+                                    >
+                                      <MdCheck
+                                        style={{
+                                          width: '12px',
+                                          height: '12px',
+                                          color: 'var(--neutral-0)',
+                                          opacity: customer.selected ? 1 : 0,
+                                          transition: 'opacity 120ms ease-out',
+                                        }}
+                                      />
+                                    </span>
+                                  </label>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div
+                                    className="flex items-center gap-[12px] rounded-[8px] p-[8px] w-full"
+                                    style={{ opacity: customer.selected ? 1 : 0.28 }}
                                   >
-                                    {customer.company_name}
-                                  </Text>
+                                    {loadingLogos.has(index) ? (
+                                      <div className="rounded-[8px] shrink-0 bg-[var(--neutral-200)] flex items-center justify-center" style={{ width: '24px', height: '24px' }}>
+                                        <Spinner size="sm" style={{ color: 'var(--neutral-600)' }} />
+                                      </div>
+                                    ) : logoUrl ? (
+                                      <img
+                                        src={logoUrl}
+                                        alt=""
+                                        className="rounded-[8px] shrink-0"
+                                        style={{ width: '24px', height: '24px', objectFit: 'cover' }}
+                                      />
+                                    ) : (
+                                      <div
+                                        className="rounded-[8px] shrink-0 bg-[var(--neutral-200)]"
+                                        style={{ width: '24px', height: '24px' }}
+                                      />
+                                    )}
+                                    <Text
+                                      variant="label-small"
+                                      as="span"
+                                      className="whitespace-pre text-[var(--neutral-700)] flex-1 min-w-0"
+                                    >
+                                      {customer.company_name}
+                                    </Text>
+                                  </div>
                                 </div>
                               </div>
                               {/* Org Number Column */}
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-[8px] rounded-[8px] px-[8px] py-[12px] w-full">
+                                <div className="flex items-center justify-end gap-[8px] rounded-[8px] px-[8px] py-[12px] w-full">
                                   <Text
                                     variant="label-small"
                                     as="span"
-                                    className="whitespace-pre text-[var(--neutral-500)] flex-1 min-w-0"
+                                    className="whitespace-pre text-[var(--neutral-500)] text-right"
                                   >
                                     {customer.orgnr || '-'}
                                   </Text>
@@ -398,8 +440,6 @@ export function UploadCustomerListModal({
             )}
           </div>
         </Modal>
-      </div>
-    </div>
   )
 }
 

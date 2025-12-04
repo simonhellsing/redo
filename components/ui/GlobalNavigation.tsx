@@ -250,77 +250,89 @@ export function GlobalNavigation({
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="flex flex-col gap-[10px] px-[12px]">
-        <div className="h-px bg-[var(--neutral-200)] w-full" />
-      </div>
+      {/* Customers Section (only when there are customers or an add button) */}
+      {(customers.length > 0 || onAddCustomerClick) && (
+        <>
+          {/* Divider */}
+          <div className="flex flex-col gap-[10px] px-[12px]">
+            <div className="h-px bg-[var(--neutral-200)] w-full" />
+          </div>
 
-      {/* Customers Section */}
-      <div className="flex flex-col gap-[4px]">
-        {/* Customers Header */}
-        <div className="flex items-center justify-between pl-[12px] pr-[8px]">
-          <Text
-            variant="label-small"
-            className="whitespace-nowrap"
-            style={{
-              color: 'var(--neutral-700)',
-            }}
-          >
-            Alla kunder
-          </Text>
-          {onAddCustomerClick && (
-            <IconButton
-              variant="navigation"
-              size="small"
-              onClick={(e) => {
-                onAddCustomerClick()
-                e.currentTarget.blur()
-              }}
-              aria-label="Add customer"
-              icon={<MdOutlineAdd />}
-            />
-          )}
-        </div>
-
-        {/* Customer List */}
-        <div className="flex flex-col gap-[2px]">
-          {customers.map((customer, index) => (
-            <button
-              key={index}
-              onClick={(e) => {
-                customer.onClick?.()
-                e.currentTarget.blur()
-              }}
-              className={cn(
-                'group customer-button-group flex items-center gap-[8px] h-[32px] px-[12px] py-[10px] rounded-[8px] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 w-full',
-                customer.active
-                  ? 'bg-[var(--neutral-200)]'
-                  : 'bg-[var(--neutral-50)] hover:bg-[var(--neutral-200)]'
-              )}
-              style={{
-                '--customer-text-color': customer.active ? 'var(--neutral-900)' : 'var(--neutral-500)',
-                '--customer-text-color-hover': 'var(--neutral-900)',
-              } as React.CSSProperties & { '--customer-text-color': string; '--customer-text-color-hover': string }}
-            >
-              {customer.logo && (
-                <span className="flex items-center justify-center shrink-0 rounded-[6px] overflow-hidden" style={{ width: '16px', height: '16px' }}>
-                  {customer.logo}
-                </span>
-              )}
+          <div className="flex flex-col gap-[4px]">
+            {/* Customers Header */}
+            <div className="flex items-center justify-between pl-[12px] pr-[8px]">
               <Text
                 variant="label-small"
-                as="span"
-                className="customer-text whitespace-nowrap transition-colors"
+                className="whitespace-nowrap"
                 style={{
-                  color: 'var(--customer-text-color)',
+                  color: 'var(--neutral-700)',
                 }}
               >
-                {customer.name}
+                Alla kunder
               </Text>
-            </button>
-          ))}
-        </div>
-      </div>
+              {onAddCustomerClick && (
+                <IconButton
+                  variant="navigation"
+                  size="small"
+                  onClick={(e) => {
+                    onAddCustomerClick()
+                    e.currentTarget.blur()
+                  }}
+                  aria-label="Add customer"
+                  icon={<MdOutlineAdd />}
+                />
+              )}
+            </div>
+
+            {/* Customer List */}
+            {customers.length > 0 && (
+              <div className="flex flex-col gap-[2px]">
+                {customers.map((customer, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      customer.onClick?.()
+                      e.currentTarget.blur()
+                    }}
+                    className={cn(
+                      'group customer-button-group flex items-center gap-[8px] h-[32px] px-[12px] py-[10px] rounded-[8px] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 w-full',
+                      customer.active
+                        ? 'bg-[var(--neutral-200)]'
+                        : 'bg-[var(--neutral-50)] hover:bg-[var(--neutral-200)]'
+                    )}
+                    style={{
+                      '--customer-text-color': customer.active ? 'var(--neutral-900)' : 'var(--neutral-500)',
+                      '--customer-text-color-hover': 'var(--neutral-900)',
+                    } as React.CSSProperties & {
+                      '--customer-text-color': string
+                      '--customer-text-color-hover': string
+                    }}
+                  >
+                    {customer.logo && (
+                      <span
+                        className="flex items-center justify-center shrink-0 rounded-[6px] overflow-hidden"
+                        style={{ width: '16px', height: '16px' }}
+                      >
+                        {customer.logo}
+                      </span>
+                    )}
+                    <Text
+                      variant="label-small"
+                      as="span"
+                      className="customer-text whitespace-nowrap transition-colors"
+                      style={{
+                        color: 'var(--customer-text-color)',
+                      }}
+                    >
+                      {customer.name}
+                    </Text>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
     </>
   )

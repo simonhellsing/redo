@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import React from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -11,7 +11,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { ImageWithFallback } from '@/components/ui/ImageWithFallback'
 import { Text } from '@/components/ui/Text'
 import { Divider } from '@/components/ui/Divider'
-import { MdOutlineDelete, MdOutlineArrowDropDown, MdOutlineCalendarToday } from 'react-icons/md'
+import { MdOutlineDelete, MdOutlineArrowDropDown, MdOutlineCalendarToday, MdOutlineImageSearch } from 'react-icons/md'
 import type { Customer } from '@/lib/types/customer'
 
 interface CustomerFormProps {
@@ -56,9 +56,9 @@ export function CustomerForm({
   const [isFetchingLogo, setIsFetchingLogo] = useState(false)
   const [useFetchedLogo, setUseFetchedLogo] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const isEditing = !!customer
+  const [isLogoTooltipVisible, setIsLogoTooltipVisible] = useState(false)
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
@@ -80,61 +80,45 @@ export function CustomerForm({
     }
   }
 
-  // Debounced logo fetching when company name changes
-  useEffect(() => {
-    // Clear existing timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current)
-    }
+  const isFetchLogoDisabled = isSubmitting || !name.trim() || isFetchingLogo
 
-    // Don't fetch if editing existing customer or name is empty
-    if (isEditing || !name.trim()) {
-      setFetchedLogoUrl(null)
-      setIsFetchingLogo(false)
-      setUseFetchedLogo(false)
-      return
-    }
+  async function handleFetchLogoClick() {
+    const trimmedName = name.trim()
+    if (!trimmedName || isFetchingLogo) return
 
-    // Don't fetch if user has manually uploaded a logo
-    if (logoFile) {
-      return
-    }
+    // If user has manually uploaded a logo, don't override it
+    if (logoFile) return
 
-    // Debounce the API call
     setIsFetchingLogo(true)
-    debounceTimerRef.current = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/brandfetch/search?query=${encodeURIComponent(name.trim())}`)
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.logoUrl) {
-            setFetchedLogoUrl(data.logoUrl)
-            // Automatically use the fetched logo
-            setUseFetchedLogo(true)
-          } else {
-            setFetchedLogoUrl(null)
-            setUseFetchedLogo(false)
-          }
+    setFetchedLogoUrl(null)
+    setUseFetchedLogo(false)
+
+    try {
+      const response = await fetch(
+        `/api/brandfetch/search?query=${encodeURIComponent(trimmedName)}`
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.logoUrl) {
+          setFetchedLogoUrl(data.logoUrl)
+          setUseFetchedLogo(true)
         } else {
           setFetchedLogoUrl(null)
           setUseFetchedLogo(false)
         }
-      } catch (error) {
-        console.error('Error fetching logo:', error)
+      } else {
         setFetchedLogoUrl(null)
         setUseFetchedLogo(false)
-      } finally {
-        setIsFetchingLogo(false)
       }
-    }, 800) // 800ms debounce
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-      }
+    } catch (error) {
+      console.error('Error fetching logo:', error)
+      setFetchedLogoUrl(null)
+      setUseFetchedLogo(false)
+    } finally {
+      setIsFetchingLogo(false)
     }
-  }, [name, isEditing, logoFile])
+  }
 
   const handleDeleteLogo = () => {
     setLogoFile(null)
@@ -309,6 +293,53 @@ export function CustomerForm({
               required 
               disabled={isSubmitting}
               inputSize="medium"
+              rightIcon={
+                <div
+                  className="relative"
+                  onMouseEnter={() => {
+                    if (!isFetchLogoDisabled) {
+                      setIsLogoTooltipVisible(true)
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    setIsLogoTooltipVisible(false)
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleFetchLogoClick}
+                    className="flex items-center justify-center h-4 w-4 rounded-[4px] cursor-pointer"
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                    }}
+                    aria-label="Hämta företagslogotyp automatiskt"
+                    disabled={isFetchLogoDisabled}
+                  >
+                    <MdOutlineImageSearch
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                      }}
+                    />
+                  </button>
+                  {/* Tooltip aligned to the right of the icon button, only on hover */}
+                  {isLogoTooltipVisible && (
+                    <div
+                      className="absolute right-0 top-full z-50 mt-[4px] whitespace-normal rounded-[6px] px-[8px] py-[6px] text-[var(--neutral-0)] shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
+                      style={{
+                        backgroundColor: 'rgba(15, 23, 42, 0.96)',
+                        width: '240px',
+                      }}
+                    >
+                      <Text variant="body-small">
+                        Hämta företagslogotyp automatiskt baserat på företagsnamnet. Kontrollera att logotypen är korrekt.
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              }
             />
           </div>
 

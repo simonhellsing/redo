@@ -64,8 +64,6 @@ export function DataTableCell({
 
   if (type === 'actions') {
     const isHover = state === 'hover'
-    const buttonBg = isHover ? 'bg-[var(--neutral-200)]' : 'bg-[var(--neutral-0)]'
-    const buttonText = isHover ? 'text-[var(--neutral-900)]' : 'text-[var(--neutral-600)]'
     const iconColor = isHover ? 'var(--neutral-900)' : 'var(--neutral-600)'
 
     return (
@@ -83,25 +81,18 @@ export function DataTableCell({
             onActionClick?.()
           }}
           className={cn(
-            'group inline-flex items-center gap-[4px] h-[24px] rounded-[6px] pl-[8px] pr-[6px] py-[10px]',
+            'group flex items-center justify-center h-[24px] w-[24px] rounded-[6px]',
             'cursor-pointer transition-colors',
             isHover 
               ? 'bg-[var(--neutral-200)] text-[var(--neutral-900)]' 
               : 'bg-[var(--neutral-0)] hover:bg-[var(--neutral-200)] text-[var(--neutral-600)] hover:text-[var(--neutral-900)]'
           )}
+          aria-label={actionLabel}
           style={{
             '--button-icon-color': iconColor,
             '--button-icon-color-hover': 'var(--neutral-900)',
           } as React.CSSProperties & { '--button-icon-color': string; '--button-icon-color-hover': string }}
         >
-          <Text
-            variant="label-small"
-            as="span"
-            className="whitespace-pre"
-            style={{ color: 'inherit' }}
-          >
-            {actionLabel}
-          </Text>
           <span
             className="flex items-center justify-center shrink-0 transition-colors group-hover:[color:var(--button-icon-color-hover)]"
             style={{

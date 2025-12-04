@@ -37,14 +37,23 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirect authenticated users away from auth pages, but allow access to login for logout
-  // Only redirect if they're trying to access signup (not login, so they can logout and switch accounts)
-  if (user && request.nextUrl.pathname === '/signup') {
+  const pathname = request.nextUrl.pathname
+
+  // If a customer (invitee) somehow lands on admin/overview routes, always send them
+  // to the customer area instead of workspace setup or admin screens.
+  const role = (user?.user_metadata as any)?.role
+  if (user && role === 'customer' && pathname.startsWith('/overview')) {
+    return NextResponse.redirect(new URL('/my-reports', request.url))
+  }
+
+  // Redirect authenticated users away from auth pages, but allow access to login for logout.
+  // Only redirect if they're trying to access signup (not login, so they can logout and switch accounts).
+  if (user && pathname === '/signup') {
     return NextResponse.redirect(new URL('/overview', request.url))
   }
 
   // Redirect unauthenticated users away from protected routes
-  if (!user && (request.nextUrl.pathname.startsWith('/overview') || request.nextUrl.pathname.startsWith('/customers') || request.nextUrl.pathname.startsWith('/settings'))) {
+  if (!user && (pathname.startsWith('/overview') || pathname.startsWith('/customers') || pathname.startsWith('/settings'))) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

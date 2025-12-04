@@ -86,6 +86,7 @@ function AdminLayoutWithNavigationContent({
         <GlobalNavigation
           organizationName={workspace.name}
           organizationLogo={organizationLogo}
+          className="w-[220px]"
           navigationItems={navigationItems}
           customers={customerItems}
           userName={userName}

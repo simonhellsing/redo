@@ -134,6 +134,7 @@ export function Input({
             width: '16px',
             height: '16px',
             color: currentIconColor,
+            position: 'relative',
           }}
         >
           {rightIcon}

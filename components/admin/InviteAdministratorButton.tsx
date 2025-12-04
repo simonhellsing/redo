@@ -1,21 +1,23 @@
-'use client'
+ 'use client'
 
 import { useState } from 'react'
+import { MdContentCopy } from 'react-icons/md'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { Text } from '@/components/ui/Text'
 
 interface InviteAdministratorButtonProps {
+  isOpen: boolean
   onClose?: () => void
 }
 
-export function InviteAdministratorButton({ onClose }: InviteAdministratorButtonProps) {
-  const [isOpen, setIsOpen] = useState(true)
+export function InviteAdministratorButton({ isOpen, onClose }: InviteAdministratorButtonProps) {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [invitationLink, setInvitationLink] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   async function handleInvite() {
     if (!email || !email.includes('@')) {
@@ -25,7 +27,8 @@ export function InviteAdministratorButton({ onClose }: InviteAdministratorButton
 
     setIsLoading(true)
     setError(null)
-    setSuccess(null)
+    setInvitationLink(null)
+    setCopied(false)
 
     try {
       const response = await fetch('/api/administrators/invite', {
@@ -40,7 +43,9 @@ export function InviteAdministratorButton({ onClose }: InviteAdministratorButton
       }
 
       const data = await response.json()
-      setSuccess(`Invitation sent! Link: ${data.invitationLink}`)
+      if (data.invitationLink) {
+        setInvitationLink(data.invitationLink)
+      }
       setEmail('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send invitation')
@@ -49,38 +54,47 @@ export function InviteAdministratorButton({ onClose }: InviteAdministratorButton
     }
   }
 
-  const handleClose = () => {
-    setIsOpen(false)
-    setEmail('')
-    setError(null)
-    setSuccess(null)
-    onClose?.()
+  const handleCopyLink = async () => {
+    if (!invitationLink) return
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(invitationLink)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = invitationLink
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // If copy fails, user can still select the text manually
+    }
   }
 
-  if (!isOpen) return null
-
+  const handleClose = () => {
+    setEmail('')
+    setError(null)
+    setInvitationLink(null)
+    setCopied(false)
+    onClose?.()
+  }
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-end p-[8px]"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.12)',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          handleClose()
-        }
-      }}
+    <Modal
+      isOpen={isOpen}
+      title="Bjud in administratör"
+      onClose={handleClose}
+      onCancel={handleClose}
+      onConfirm={handleInvite}
+      confirmLabel="Skicka inbjudan"
+      confirmDisabled={isLoading || !email}
+      cancelLabel="Avbryt"
     >
-      <div onClick={(e) => e.stopPropagation()} className="h-full">
-        <Modal
-          title="Bjud in administratör"
-          onClose={handleClose}
-          onCancel={handleClose}
-          onConfirm={handleInvite}
-          confirmLabel="Skicka inbjudan"
-          confirmDisabled={isLoading || !email}
-          cancelLabel="Avbryt"
-        >
           <div className="flex flex-col gap-[32px] items-center w-full">
             <div className="flex flex-col gap-[20px] items-start w-full max-w-[360px]">
               <Text variant="body-small" style={{ color: 'var(--neutral-600)' }}>
@@ -106,16 +120,42 @@ export function InviteAdministratorButton({ onClose }: InviteAdministratorButton
                 </div>
               )}
 
-              {success && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm w-full">
-                  {success}
+              {invitationLink && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm w-full flex flex-col gap-[8px]">
+                  <Text variant="body-small" style={{ color: 'var(--green-800, #166534)' }}>
+                    Inbjudan skickad! Du kan även kopiera länken nedan om du vill dela den manuellt.
+                  </Text>
+                  <div className="flex flex-col gap-[4px]">
+                    <Label htmlFor="admin-invite-link" className="text-xs text-green-800">
+                      Inbjudningslänk
+                    </Label>
+                    <Input
+                      id="admin-invite-link"
+                      value={invitationLink}
+                      readOnly
+                      inputSize="medium"
+                      rightIcon={
+                        <button
+                          type="button"
+                          onClick={handleCopyLink}
+                          className="flex items-center justify-center cursor-pointer"
+                        >
+                          <MdContentCopy size={16} />
+                        </button>
+                      }
+                    />
+                    {copied && (
+                      <Text variant="body-small" style={{ color: 'var(--green-800, #166534)' }}>
+                        Länken har kopierats.
+                      </Text>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </div>
         </Modal>
-      </div>
-    </div>
   )
 }
+
 

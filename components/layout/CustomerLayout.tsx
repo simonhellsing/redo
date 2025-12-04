@@ -59,6 +59,7 @@ export function CustomerLayout({
         <GlobalNavigation
           organizationName={workspaceName}
           organizationLogo={organizationLogo}
+          className="w-[220px]"
           navigationItems={navigationItems}
           customers={[]}
           userName={userName}

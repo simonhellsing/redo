@@ -29,8 +29,6 @@ export function CustomerModal({
 
   const isEditing = !!customer
 
-  if (!isOpen) return null
-
   const handleConfirm = () => {
     if (formRef.current) {
       const submitButton = formRef.current.querySelector<HTMLButtonElement>('button[type="submit"]')
@@ -65,50 +63,37 @@ export function CustomerModal({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex items-start justify-end p-[8px]"
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.12)',
-        }}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            onClose()
-          }
-        }}
+      <Modal
+        isOpen={isOpen}
+        title={isEditing ? 'Redigera kund' : 'Lägg till ny kund'}
+        onClose={onClose}
+        onCancel={onClose}
+        cancelLabel="Avbryt"
+        confirmLabel={isEditing ? 'Uppdatera kund' : 'Lägg till kund'}
+        confirmDisabled={isSubmitting}
+        onConfirm={handleConfirm}
+        footerLeftContent={
+          !isEditing ? (
+            <Button
+              variant="tertiary"
+              size="small"
+              onClick={handleUploadListClick}
+              disabled={isSubmitting}
+            >
+              Ladda upp kundlista
+            </Button>
+          ) : undefined
+        }
       >
-        <div onClick={(e) => e.stopPropagation()} className="h-full">
-          <Modal
-            title={isEditing ? "Redigera kund" : "Lägg till ny kund"}
-            onClose={onClose}
-            onCancel={onClose}
-            cancelLabel="Avbryt"
-            confirmLabel={isEditing ? "Uppdatera kund" : "Lägg till kund"}
-            confirmDisabled={isSubmitting}
-            onConfirm={handleConfirm}
-            footerLeftContent={
-              !isEditing ? (
-                <Button
-                  variant="tertiary"
-                  size="small"
-                  onClick={handleUploadListClick}
-                  disabled={isSubmitting}
-                >
-                  Ladda upp kundlista
-                </Button>
-              ) : undefined
-            }
-          >
-            <CustomerForm
-              customer={customer || undefined}
-              workspaceId={workspaceId}
-              onSubmitSuccess={handleFormSubmitSuccess}
-              hideButtons={true}
-              formRef={formRef}
-              onSubmittingChange={setIsSubmitting}
-            />
-          </Modal>
-        </div>
-      </div>
+        <CustomerForm
+          customer={customer || undefined}
+          workspaceId={workspaceId}
+          onSubmitSuccess={handleFormSubmitSuccess}
+          hideButtons={true}
+          formRef={formRef}
+          onSubmittingChange={setIsSubmitting}
+        />
+      </Modal>
       <UploadCustomerListModal
         isOpen={isUploadModalOpen}
         onClose={handleUploadModalClose}

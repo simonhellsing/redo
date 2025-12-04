@@ -8,3 +8,4 @@ ALTER TABLE invitations
 ADD CONSTRAINT invitations_type_check 
 CHECK (type IN ('workspace_collaborator', 'customer', 'administrator'));
 
+

@@ -83,3 +83,4 @@ ALTER TABLE reports DROP COLUMN IF EXISTS workspace_id;
 - The unique constraint on `customer_users` is now `(workspace_id, customer_id, user_id)`
 - All new inserts must include `workspace_id`
 
+

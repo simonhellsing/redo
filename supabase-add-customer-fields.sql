@@ -40,3 +40,4 @@ UPDATE customers SET epost = contact_email WHERE epost IS NULL AND contact_email
 -- Set default status for existing customers
 UPDATE customers SET status = 'Aktiv' WHERE status IS NULL;
 
+

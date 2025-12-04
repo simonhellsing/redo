@@ -77,21 +77,18 @@ const variantStyles: Record<TextVariant, React.CSSProperties> = {
     fontFamily: 'var(--font-inter), sans-serif',
     fontWeight: 600,
     fontSize: '14px',
-    lineHeight: '20px',
     letterSpacing: '0',
   },
   'label-medium': {
     fontFamily: 'var(--font-inter), sans-serif',
     fontWeight: 600,
     fontSize: '12px',
-    lineHeight: '16px',
     letterSpacing: '0',
   },
   'label-small': {
     fontFamily: 'var(--font-inter), sans-serif',
     fontWeight: 600,
     fontSize: '12px',
-    lineHeight: '16px',
     letterSpacing: '0',
   },
   'body-large': {
@@ -124,9 +121,11 @@ const defaultElements: Record<TextVariant, TextProps['as']> = {
   'title-large': 'h2',
   'title-medium': 'h3',
   'title-small': 'h3',
-  'label-large': 'label',
-  'label-medium': 'label',
-  'label-small': 'label',
+  // Label variants are purely typographic; they should not render actual <label> elements
+  // so that semantics and spacing are controlled by parent components like `Label`.
+  'label-large': 'span',
+  'label-medium': 'span',
+  'label-small': 'span',
   'body-large': 'p',
   'body-medium': 'p',
   'body-small': 'p',

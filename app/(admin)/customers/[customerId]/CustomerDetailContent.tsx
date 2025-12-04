@@ -18,7 +18,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { Menu, MenuItem } from '@/components/ui/Menu'
 import { Tag } from '@/components/ui/Tag'
 import { parseHuvudbokCsv, Transaction } from '@/lib/huvudbok/parseHuvudbokCsv'
-import { MdOutlineUpload, MdOutlinePublish, MdOutlineMoreHoriz, MdOutlineCheckCircle, MdOutlineCalendarToday, MdOutlineInfo, MdOutlineErrorOutline } from 'react-icons/md'
+import { MdOutlineUpload, MdOutlinePublish, MdOutlineMoreHoriz, MdOutlineCheckCircle, MdOutlineCalendarToday, MdOutlineInfo, MdOutlineErrorOutline, MdOutlineVisibility } from 'react-icons/md'
 import type { Customer } from '@/lib/types/customer'
 
 interface SourceDocument {
@@ -153,8 +153,8 @@ export function CustomerDetailContent({
         throw new Error(errorData.error || 'Kunde inte radera kunden')
       }
 
-      // Redirect to customers list after successful deletion
-      router.push('/customers')
+      // Redirect to overview page after successful deletion
+      router.push('/overview')
     } catch (error) {
       console.error('Error deleting customer:', error)
       alert(error instanceof Error ? error.message : 'Kunde inte radera kunden. Försök igen.')
@@ -240,6 +240,7 @@ export function CustomerDetailContent({
   const hasTransactions = transactions && transactions.length > 0
   const canPublish = hasSourceDocuments && latestReport && latestReport.status === 'generated'
   const isPublishDisabled = !latestReport || latestReport.status === 'published'
+  const canPreview = !!latestReport && latestReport.status === 'published'
 
   async function handlePublish() {
     if (!latestReport) return
@@ -336,6 +337,18 @@ export function CustomerDetailContent({
             >
               {isParsing ? 'Laddar...' : hasSourceDocuments ? 'Uppdatera huvudbok' : 'Ladda upp huvudbok'}
             </Button>
+            {canPreview && latestReport && (
+              <Button
+                variant="secondary"
+                size="small"
+                leftIcon={<MdOutlineVisibility />}
+                onClick={() =>
+                  router.push(`/customers/${customer.id}/reports/${latestReport.id}/preview`)
+                }
+              >
+                Förhandsgranska
+              </Button>
+            )}
             <Button
               variant="primary"
               size="small"
@@ -438,7 +451,11 @@ export function CustomerDetailContent({
             <div className="text-center m-0 p-0">
               <Text
                 variant="label-small"
-                className="text-[var(--neutral-500)] leading-[16px] m-0 p-0"
+                className="text-[var(--neutral-500)] m-0 p-0"
+                style={{
+                  lineHeight: '16px',
+                  display: 'inline-block',
+                }}
               >
                 Vänligen ladda upp en huvudbok för att sammanställa en rapport.
               </Text>

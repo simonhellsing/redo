@@ -39,3 +39,4 @@ FROM auth.users u
 JOIN profiles p ON p.id = u.id
 WHERE u.email = 'simonhellsing@gmail.com';
 
+

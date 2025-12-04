@@ -87,15 +87,20 @@ export function SignupForm() {
         <Text variant="title-large" className="text-center w-[360px]" style={{ color: 'var(--neutral-800)' }}>
           Skapa konto
         </Text>
-        <div className="flex flex-wrap gap-1.5 items-start justify-center relative shrink-0 w-full">
-          <Text variant="body-small" style={{ color: 'var(--neutral-500)', letterSpacing: '0.25px' }}>
-            Har du redan ett konto?
-          </Text>
-          <Link href="/login">
-            <Text variant="body-small" className="font-semibold whitespace-nowrap" style={{ color: 'var(--neutral-600)' }}>
+        <div className="flex flex-wrap items-start justify-center relative shrink-0 w-full">
+          <Text
+            variant="body-small"
+            style={{ color: 'var(--neutral-500)', letterSpacing: '0.25px' }}
+            className="text-center"
+          >
+            Har du redan ett konto?{' '}
+            <Link
+              href="/login"
+              className="text-label-small font-semibold whitespace-nowrap text-[var(--neutral-900)] hover:text-[var(--neutral-600)] transition-colors"
+            >
               Logga in här.
-            </Text>
-          </Link>
+            </Link>
+          </Text>
         </div>
       </div>
 

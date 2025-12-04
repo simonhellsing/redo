@@ -13,6 +13,7 @@ export function Label({ className, children, ...props }: LabelProps) {
       {...props}
     >
       <Text
+        as="span"
         variant="label-small"
         className="whitespace-nowrap"
         style={{

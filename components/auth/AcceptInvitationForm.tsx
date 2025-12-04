@@ -101,43 +101,15 @@ export function AcceptInvitationForm({ invitation, customerName, workspaceName, 
         .eq('id', user.id)
         .single()
 
-      // Get customer to validate
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('workspace_id')
-        .eq('id', invitation.customer_id)
-        .single()
+      // Determine workspace from the invitation.
+      // The invitation was created server-side using an admin client, so its workspace_id is the source of truth.
+      const finalWorkspaceId = invitation.workspace_id
 
-      if (!customer) {
-        setError('Customer not found')
-        setIsLoading(false)
-        return
-      }
-
-      // Always use invitation.workspace_id as the source of truth
-      // This ensures the user is added to the workspace they were invited to
-      // If invitation.workspace_id is not set, fall back to customer.workspace_id but log a warning
-      const workspaceId = invitation.workspace_id || customer.workspace_id
-      
-      if (!workspaceId) {
+      if (!finalWorkspaceId) {
         setError('Workspace not found for this invitation')
         setIsLoading(false)
         return
       }
-
-      // Validate that invitation workspace_id matches customer workspace_id if both exist
-      // If they don't match, use invitation.workspace_id (the source of truth for the invitation)
-      if (invitation.workspace_id && customer.workspace_id && invitation.workspace_id !== customer.workspace_id) {
-        console.warn('Workspace mismatch detected: invitation workspace_id does not match customer workspace_id. Using invitation workspace_id.', {
-          invitation_workspace_id: invitation.workspace_id,
-          customer_workspace_id: customer.workspace_id,
-          invitation_id: invitation.id,
-          customer_id: invitation.customer_id,
-        })
-      }
-      
-      // Always prioritize invitation.workspace_id if it exists
-      const finalWorkspaceId = invitation.workspace_id || customer.workspace_id
 
       // If user is already an administrator, don't overwrite their role
       // Instead, just link them to the customer while keeping their admin role
@@ -170,32 +142,39 @@ export function AcceptInvitationForm({ invitation, customerName, workspaceName, 
       // For new customer users or existing customer users, update their profile
       await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          name: name || profile?.name || user.user_metadata?.name || user.email?.split('@')[0],
-          role: 'customer',
-        }, {
-          onConflict: 'id',
-        })
+        .upsert(
+          {
+            id: user.id,
+            name: name || profile?.name || user.user_metadata?.name || user.email?.split('@')[0],
+            role: 'customer',
+          },
+          {
+            onConflict: 'id',
+          }
+        )
 
-      // Link user to customer in customer_users table
-      if (invitation.customer_id && finalWorkspaceId) {
-        await supabase
-          .from('customer_users')
-          .upsert({
-            user_id: user.id,
-            customer_id: invitation.customer_id,
-            workspace_id: finalWorkspaceId,
-          }, {
-            onConflict: 'workspace_id,customer_id,user_id',
-          })
+      // Now call a server-side API route that will:
+      // - Verify the invitation
+      // - Link the user to the customer in customer_users using the admin client
+      // - Mark the invitation as accepted
+      const response = await fetch('/api/customers/accept-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invitationId: invitation.id,
+          userId: user.id,
+          userEmail: user.email,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        setError(data?.error || 'Failed to complete invitation acceptance. Please try again.')
+        setIsLoading(false)
+        return
       }
-
-      // Mark invitation as accepted
-      await supabase
-        .from('invitations')
-        .update({ accepted_at: new Date().toISOString() })
-        .eq('id', invitation.id)
 
       router.push('/my-reports')
       router.refresh()
@@ -295,15 +274,20 @@ export function AcceptInvitationForm({ invitation, customerName, workspaceName, 
         </Button>
       </form>
       
-      <div className="flex flex-wrap gap-1.5 items-start justify-center relative shrink-0 w-full">
-        <Text variant="body-small" style={{ color: 'var(--neutral-500)', letterSpacing: '0.25px' }}>
-          Har du redan ett konto?
-        </Text>
-        <Link href="/login">
-          <Text variant="body-small" className="font-semibold whitespace-nowrap" style={{ color: 'var(--neutral-600)' }}>
+      <div className="flex flex-wrap items-start justify-center relative shrink-0 w-full">
+        <Text
+          variant="body-small"
+          style={{ color: 'var(--neutral-500)', letterSpacing: '0.25px' }}
+          className="text-center"
+        >
+          Har du redan ett konto?{' '}
+          <Link
+            href="/login"
+            className="text-label-small font-semibold whitespace-nowrap text-[var(--neutral-900)] hover:text-[var(--neutral-600)] transition-colors"
+          >
             Logga in här.
-          </Text>
-        </Link>
+          </Link>
+        </Text>
       </div>
     </>
   )

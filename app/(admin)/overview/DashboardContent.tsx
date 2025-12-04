@@ -69,7 +69,7 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
             lineHeight: '32px',
           }}
         >
-          Välkommen tillbaka, {userName}!
+          Välkommen, {userName}!
         </Text>
         <div className="flex gap-[20px] items-start shrink-0 w-full relative">
           <div className="flex-1 relative">
@@ -110,9 +110,10 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
             className="flex-1"
           />
         </div>
-        {showInviteAdminModal && (
-          <InviteAdministratorButton onClose={() => setShowInviteAdminModal(false)} />
-        )}
+        <InviteAdministratorButton
+          isOpen={showInviteAdminModal}
+          onClose={() => setShowInviteAdminModal(false)}
+        />
         <input
           ref={uploadFileInputRef}
           type="file"
@@ -126,22 +127,20 @@ export function DashboardContent({ userName, customers, workspaceId }: Dashboard
             }
           }}
         />
-        {showUploadCustomerListModal && (
-          <UploadCustomerListModal
-            isOpen={showUploadCustomerListModal}
-            onClose={() => {
-              setShowUploadCustomerListModal(false)
-              if (uploadFileInputRef.current) {
-                uploadFileInputRef.current.value = ''
-              }
-            }}
-            workspaceId={workspaceId}
-            onSuccess={() => {
-              router.refresh()
-            }}
-            initialFile={uploadFileInputRef.current?.files?.[0] || null}
-          />
-        )}
+        <UploadCustomerListModal
+          isOpen={showUploadCustomerListModal}
+          onClose={() => {
+            setShowUploadCustomerListModal(false)
+            if (uploadFileInputRef.current) {
+              uploadFileInputRef.current.value = ''
+            }
+          }}
+          workspaceId={workspaceId}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          initialFile={uploadFileInputRef.current?.files?.[0] || null}
+        />
       </div>
 
       {/* Customers Section */}
