@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (customerUserError) {
       console.error('Failed to upsert customer_users during accept-invitation:', {
         error: customerUserError,
-        userId: user.id,
+        userId,
         customerId: invitation.customer_id,
         workspaceId: invitation.workspace_id,
       })
