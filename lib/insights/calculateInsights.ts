@@ -242,3 +242,4 @@ export function formatPercentage(value: number, showSign = true): string {
   return `${sign}${value.toFixed(0)}%`
 }
 
+

@@ -186,3 +186,4 @@ export function formatCompact(value: number): string {
   return `${sign}${absValue} kr`
 }
 
+

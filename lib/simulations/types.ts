@@ -59,3 +59,4 @@ export type QuickScenario = {
   createChanges: (startDate: Date, baseData: MonthlyFinancialData) => SimulationChange[]
 }
 
+

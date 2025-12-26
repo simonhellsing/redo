@@ -117,3 +117,4 @@ export const mockFinancialDataNegative: MonthlyFinancialData = {
   employees: 3,
 }
 
+

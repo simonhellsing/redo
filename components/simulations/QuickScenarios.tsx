@@ -35,3 +35,4 @@ export function QuickScenarios({ onSelectScenario }: QuickScenariosProps) {
   )
 }
 
+

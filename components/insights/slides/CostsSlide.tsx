@@ -100,3 +100,4 @@ export function CostsSlide({ fixedCosts, variableCosts }: CostsSlideProps) {
   )
 }
 
+

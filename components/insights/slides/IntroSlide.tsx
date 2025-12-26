@@ -61,3 +61,4 @@ export function IntroSlide({ companyName, month, year }: IntroSlideProps) {
   )
 }
 
+
